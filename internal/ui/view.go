@@ -117,6 +117,12 @@ func (m Model) View() string {
 				}
 				return "[ Hide ]"
 			}()},
+			{"Arabic Numerals", func() string {
+				if m.State.Settings.UseArabicNumerals {
+					return "[ Enabled ]"
+				}
+				return "[ Disabled ]"
+			}()},
 		}
 
 		for i, opt := range opts {

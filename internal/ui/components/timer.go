@@ -205,7 +205,13 @@ func RenderTimer(t *engine.Timer, width, height int) string {
 	for r := 0; r < 5; r++ {
 		var rowParts []string
 		for _, char := range timeStr {
-			block, exists := BlockDigits[char]
+			var block []string
+			var exists bool
+			if t.Settings.UseArabicNumerals {
+				block, exists = engine.ArabicDigits[char]
+			} else {
+				block, exists = BlockDigits[char]
+			}
 			if exists {
 				rowParts = append(rowParts, block[r])
 			} else {

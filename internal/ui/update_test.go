@@ -312,3 +312,56 @@ func TestUpdate_SettingsLongBreakDuration(t *testing.T) {
 		t.Errorf("expected LongBreakDuration to increment back, got %d", updated.State.Settings.LongBreakDuration)
 	}
 }
+
+func TestUpdate_SettingsArabicNumerals(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "oasis_test_settings_arabic_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dbPath := filepath.Join(tmpDir, "state.json")
+	state := storage.DefaultState()
+	m := NewModel(state, dbPath)
+
+	m.ActiveTab = TabSettings
+	m.SettingsCursor = 5 // Arabic Numerals
+
+	if m.State.Settings.UseArabicNumerals {
+		t.Fatal("expected UseArabicNumerals to be false initially")
+	}
+
+	// Press left to toggle it
+	resModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("left")})
+	updated := resModel.(Model)
+	if !updated.State.Settings.UseArabicNumerals {
+		t.Error("expected UseArabicNumerals to toggle to true")
+	}
+	if !updated.Timer.Settings.UseArabicNumerals {
+		t.Error("expected timer settings UseArabicNumerals to toggle to true")
+	}
+
+	// Load from disk to verify persistence
+	loadedState, err := storage.LoadState(dbPath)
+	if err != nil {
+		t.Fatalf("failed to load state from disk: %v", err)
+	}
+	if !loadedState.Settings.UseArabicNumerals {
+		t.Error("expected persisted UseArabicNumerals to be true")
+	}
+
+	// Press right to toggle back to false
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("right")})
+	updated = resModel.(Model)
+	if updated.State.Settings.UseArabicNumerals {
+		t.Error("expected UseArabicNumerals to toggle back to false")
+	}
+
+	// Press space to toggle back to true
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
+	updated = resModel.(Model)
+	if !updated.State.Settings.UseArabicNumerals {
+		t.Error("expected UseArabicNumerals to toggle to true on space key")
+	}
+}
+

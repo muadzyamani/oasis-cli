@@ -45,6 +45,7 @@ type SettingsState struct {
 	AutoStartBreaks    bool `json:"auto_start_breaks"`
 	AutoStartFocus     bool `json:"auto_start_focus"`
 	ShowStreak         bool `json:"show_streak"`
+	UseArabicNumerals  bool `json:"use_arabic_numerals"`
 }
 
 // StatsState stores streak counters and daily focus logs.
@@ -77,6 +78,7 @@ func DefaultState() *ApplicationState {
 			AutoStartBreaks:    false,
 			AutoStartFocus:     false,
 			ShowStreak:         true,
+			UseArabicNumerals:  false,
 		},
 		Stats: StatsState{
 			CurrentStreak: 0,
