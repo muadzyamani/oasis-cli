@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muadzyamani/oasis-cli/internal/ui/components"
+	"github.com/muadzyamani/oasis-cli/internal/engine"
 	"github.com/muadzyamani/oasis-cli/internal/ui/styles"
 )
 
@@ -90,7 +90,7 @@ func (m Model) View() string {
 		if innerHeight < 3 {
 			innerHeight = 3
 		}
-		pageContent = components.RenderTimer(m.Timer, innerWidth, innerHeight)
+		pageContent = engine.RenderTimer(m.Timer, innerWidth, innerHeight)
 	case TabStats:
 		pageContent = "📊  STATS & TRACKING PANEL\n\n(Streak calendars, historical focus charts, and metrics coming in Phase 5)"
 	case TabSettings:
