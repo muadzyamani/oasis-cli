@@ -87,11 +87,42 @@ func TestUpdate_PomodoroKeys(t *testing.T) {
 		t.Errorf("expected Up arrow to add 1 minute, got %v", updated.Timer.TimeRemaining)
 	}
 
+	// 4b. Test down arrow subtracts 1 minute
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("down")})
+	updated = resModel.(Model)
+	if updated.Timer.TimeRemaining != initialRemaining {
+		t.Errorf("expected Down arrow to subtract 1 minute, got %v", updated.Timer.TimeRemaining)
+	}
+
 	// 5. Test left arrow resets the timer
 	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("left")})
 	updated = resModel.(Model)
 	if updated.Timer.State != engine.StateIdle {
 		t.Errorf("expected Idle state after reset (left arrow), got %s", updated.Timer.State)
+	}
+	if updated.Timer.TimeRemaining != 25*time.Minute {
+		t.Errorf("expected reset to set remaining time to 25m, got %v", updated.Timer.TimeRemaining)
+	}
+
+	// 5b. Test down arrow clamping at 1 minute
+	// Set remaining time to 1 minute
+	updated.Timer.TimeRemaining = time.Minute
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("down")})
+	updated = resModel.(Model)
+	if updated.Timer.TimeRemaining != time.Minute {
+		t.Errorf("expected remaining time to clamp at 1 minute, got %v", updated.Timer.TimeRemaining)
+	}
+
+	// 5c. Test left arrow resets timer in Idle state when time was modified
+	updated.Timer.TimeRemaining = 30 * time.Minute
+	updated.Timer.Duration = 30 * time.Minute
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("left")})
+	updated = resModel.(Model)
+	if updated.Timer.TimeRemaining != 25*time.Minute {
+		t.Errorf("expected reset in Idle state to restore remaining time to 25m, got %v", updated.Timer.TimeRemaining)
+	}
+	if updated.Timer.Duration != 25*time.Minute {
+		t.Errorf("expected reset in Idle state to restore duration to 25m, got %v", updated.Timer.Duration)
 	}
 
 	// 6. Test 's' key skips focus when Idle (toggles to short break)

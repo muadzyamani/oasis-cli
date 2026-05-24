@@ -303,3 +303,26 @@ func TestTimerInvalidTransitions(t *testing.T) {
 	}
 }
 
+func TestTimerReset(t *testing.T) {
+	settings := storage.SettingsState{
+		FocusDuration: 25,
+	}
+	timer := NewTimer(settings, "", 0)
+
+	// Adjust remaining time during Idle state
+	timer.TimeRemaining = 30 * time.Minute
+	timer.Duration = 30 * time.Minute
+
+	timer.Reset()
+
+	if timer.Duration != 25*time.Minute {
+		t.Errorf("expected reset duration 25m, got %v", timer.Duration)
+	}
+	if timer.TimeRemaining != 25*time.Minute {
+		t.Errorf("expected reset remaining time 25m, got %v", timer.TimeRemaining)
+	}
+	if timer.State != StateIdle {
+		t.Errorf("expected state to be idle, got %s", timer.State)
+	}
+}
+

@@ -171,6 +171,14 @@ func (t *Timer) Stop(now time.Time) *storage.Session {
 	return abandonedSession
 }
 
+// Reset resets the timer duration and remaining time to the default value for the current session type and sets state to idle.
+func (t *Timer) Reset() {
+	t.Duration = t.getDurationForType(t.SessionType)
+	t.TimeRemaining = t.Duration
+	t.State = StateIdle
+	t.CurrentSessionID = ""
+}
+
 // Tick decrements the time remaining and checks for session completion.
 // Returns (completed, completedSession, autoStartedSession).
 func (t *Timer) Tick(delta time.Duration, now time.Time) (bool, *storage.Session, *storage.Session) {

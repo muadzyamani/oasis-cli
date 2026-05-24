@@ -46,6 +46,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Timer.TimeRemaining += time.Minute
 				return m, nil
 
+			case "down": // Down Arrow: Subtract 1 minute
+				if m.Timer.TimeRemaining > time.Minute {
+					m.Timer.TimeRemaining -= time.Minute
+				}
+				return m, nil
+
 			case "left": // Left Arrow: Reset timer
 				if m.Timer.State == engine.StateRunning || m.Timer.State == engine.StatePaused {
 					abandonedSession := m.Timer.Stop(time.Now())
@@ -66,6 +72,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						_ = storage.SaveState(m.DbPath, m.State)
 					}
 				}
+				m.Timer.Reset()
 				return m, nil
 
 			case "s": // s key: Skip session
