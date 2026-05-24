@@ -73,7 +73,15 @@ func (m Model) View() string {
 	var pageContent string
 	switch m.ActiveTab {
 	case TabOasis:
-		pageContent = components.RenderTimer(m.Timer, viewportWidth, viewportHeight)
+		innerWidth := viewportWidth - 6
+		innerHeight := viewportHeight - 4
+		if innerWidth < 10 {
+			innerWidth = 10
+		}
+		if innerHeight < 3 {
+			innerHeight = 3
+		}
+		pageContent = components.RenderTimer(m.Timer, innerWidth, innerHeight)
 	case TabStats:
 		pageContent = "📊  STATS & TRACKING PANEL\n\n(Streak calendars, historical focus charts, and metrics coming in Phase 5)"
 	case TabSettings:
