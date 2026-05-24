@@ -367,6 +367,10 @@ func sendSessionEndNotification(sessionType string, soundEnabled bool) {
 	// var appIcon string = "path/to/icon.png"
 	var appIcon string = ""
 
+	// Optional: path to a custom sound file (.wav, .mp3, etc.) for future implementation
+	// var customSoundPath string = "assets/completed.wav"
+	var customSoundPath string = ""
+
 	if sessionType == "focus" {
 		title = "Focus Session Completed"
 		message = "Great job. Time to take a break."
@@ -377,8 +381,26 @@ func sendSessionEndNotification(sessionType string, soundEnabled bool) {
 	// ----------------------------------
 
 	if soundEnabled {
+		// Play the native OS notification alert sound
 		_ = beeep.Alert(title, message, appIcon)
+
+		// Placeholder for custom sound play in the future
+		if customSoundPath != "" {
+			// playCustomSound(customSoundPath)
+		}
 	} else {
 		_ = beeep.Notify(title, message, appIcon)
 	}
 }
+
+// playCustomSound plays a custom sound file from the specified path.
+// In the future, this can be implemented using a library like github.com/faiface/beep or github.com/hajimehoshi/oto.
+// func playCustomSound(soundPath string) {
+// 	// Code to open and stream/play the sound file:
+// 	// f, err := os.Open(soundPath)
+// 	// if err != nil {
+// 	// 	return
+// 	// }
+// 	// defer f.Close()
+// 	// ... play logic ...
+// }
