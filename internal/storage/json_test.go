@@ -32,10 +32,6 @@ func TestDefaultState(t *testing.T) {
 		t.Errorf("expected default focus duration 25, got %d", state.Settings.FocusDuration)
 	}
 
-	if state.Oasis.Elements == nil {
-		t.Error("expected default elements to be non-nil")
-	}
-
 	if state.Sessions == nil {
 		t.Error("expected default sessions to be non-nil")
 	}
@@ -80,16 +76,6 @@ func TestSaveAndLoad(t *testing.T) {
 	customState.Oasis.Name = "Test Oasis"
 	customState.Oasis.Tier = 3
 	customState.Oasis.TotalFocusMinutes = 120
-	customState.Oasis.Elements = append(customState.Oasis.Elements, OasisElement{
-		ID:        "elem-1",
-		Type:      "palm",
-		PlantedAt: time.Now().Round(time.Second), // Round to avoid precision diff on serialization
-		SessionID: "sess-1",
-		Label:     "A lovely palm",
-		X:         50,
-		Y:         60,
-		Stage:     "mature",
-	})
 	customState.Sessions = append(customState.Sessions, Session{
 		ID:              "sess-1",
 		Type:            "focus",
@@ -97,7 +83,6 @@ func TestSaveAndLoad(t *testing.T) {
 		CompletedAt:     time.Now().Round(time.Second),
 		DurationMinutes: 25,
 		Status:          "complete",
-		OasisElementID:  "elem-1",
 	})
 	customState.Settings.FocusDuration = 50
 	customState.Stats.CurrentStreak = 5
@@ -125,26 +110,12 @@ func TestSaveAndLoad(t *testing.T) {
 		t.Errorf("expected focus duration 50, got %d", loadedState.Settings.FocusDuration)
 	}
 
-	if len(loadedState.Oasis.Elements) != 1 {
-		t.Fatalf("expected 1 element, got %d", len(loadedState.Oasis.Elements))
-	}
-
-	elem := loadedState.Oasis.Elements[0]
-	if elem.ID != "elem-1" || elem.Type != "palm" || elem.Label != "A lovely palm" || elem.X != 50 || elem.Y != 60 || elem.Stage != "mature" {
-		t.Errorf("element details mismatch: %+v", elem)
-	}
-
-	// Compare timestamps allowing small formatting or zone discrepancies, but they should match
-	if !elem.PlantedAt.Equal(customState.Oasis.Elements[0].PlantedAt) {
-		t.Errorf("expected element planted time %v, got %v", customState.Oasis.Elements[0].PlantedAt, elem.PlantedAt)
-	}
-
 	if len(loadedState.Sessions) != 1 {
 		t.Fatalf("expected 1 session, got %d", len(loadedState.Sessions))
 	}
 
 	sess := loadedState.Sessions[0]
-	if sess.ID != "sess-1" || sess.Type != "focus" || sess.DurationMinutes != 25 || sess.Status != "complete" || sess.OasisElementID != "elem-1" {
+	if sess.ID != "sess-1" || sess.Type != "focus" || sess.DurationMinutes != 25 || sess.Status != "complete" {
 		t.Errorf("session details mismatch: %+v", sess)
 	}
 
@@ -212,5 +183,57 @@ func TestAtomicReplace(t *testing.T) {
 	// Verify the real file exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Error("expected final state file to exist, but it is missing")
+	}
+}
+
+func TestLoadCleansActiveSessions(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "oasis-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	path := filepath.Join(tempDir, "state.json")
+
+	customState := DefaultState()
+	customState.Sessions = append(customState.Sessions, Session{
+		ID:              "sess-active",
+		Type:            "focus",
+		StartedAt:       time.Now().Add(-10 * time.Minute).Round(time.Second),
+		DurationMinutes: 25,
+		Status:          "active",
+	})
+
+	err = SaveState(path, customState)
+	if err != nil {
+		t.Fatalf("failed to save state: %v", err)
+	}
+
+	// Load the state, which should automatically convert the active session to abandoned
+	loadedState, err := LoadState(path)
+	if err != nil {
+		t.Fatalf("failed to load state: %v", err)
+	}
+
+	if len(loadedState.Sessions) != 1 {
+		t.Fatalf("expected 1 session, got %d", len(loadedState.Sessions))
+	}
+
+	sess := loadedState.Sessions[0]
+	if sess.Status != "abandoned" {
+		t.Errorf("expected loaded active session to be converted to abandoned, got %q", sess.Status)
+	}
+
+	if sess.CompletedAt.IsZero() {
+		t.Error("expected CompletedAt to be set for the abandoned session, got zero time")
+	}
+
+	// Also verify it was persisted back to the file
+	fileState, err := LoadState(path)
+	if err != nil {
+		t.Fatalf("failed to load state from disk second time: %v", err)
+	}
+	if fileState.Sessions[0].Status != "abandoned" {
+		t.Errorf("expected session on disk to be abandoned, got %q", fileState.Sessions[0].Status)
 	}
 }

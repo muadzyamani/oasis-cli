@@ -17,26 +17,14 @@ type ApplicationState struct {
 	Stats    StatsState    `json:"stats"`
 }
 
-// OasisState stores the current growth progress and plants in the desert.
+// OasisState stores the current growth progress.
 type OasisState struct {
-	Name              string         `json:"name"`
-	Tier              int            `json:"tier"`
-	TotalFocusMinutes int            `json:"total_focus_minutes"`
-	Elements          []OasisElement `json:"elements"`
-	CreatedAt         time.Time      `json:"created_at"`
+	Name              string    `json:"name"`
+	Tier              int       `json:"tier"`
+	TotalFocusMinutes int       `json:"total_focus_minutes"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
-// OasisElement represents a plant element placed in the Oasis.
-type OasisElement struct {
-	ID        string    `json:"id"`
-	Type      string    `json:"type"` // e.g. "sprout", "flower", "reed", "palm"
-	PlantedAt time.Time `json:"planted_at"`
-	SessionID string    `json:"session_id"`
-	Label     string    `json:"label"`
-	X         int       `json:"x"` // percentage 0-100
-	Y         int       `json:"y"` // percentage 0-100
-	Stage     string    `json:"stage"` // "sapling" | "mature"
-}
 
 // Session represents a completed or active timer session.
 type Session struct {
@@ -46,7 +34,6 @@ type Session struct {
 	CompletedAt     time.Time `json:"completed_at,omitempty"`
 	DurationMinutes int       `json:"duration_minutes"`
 	Status          string    `json:"status"` // "active" | "complete" | "abandoned"
-	OasisElementID  string    `json:"oasis_element_id,omitempty"`
 }
 
 // SettingsState stores customizable timer configurations and visuals.
@@ -58,9 +45,6 @@ type SettingsState struct {
 	LongBreakInterval  int  `json:"long_break_interval"`
 	AutoStartBreaks    bool `json:"auto_start_breaks"`
 	AutoStartFocus     bool `json:"auto_start_focus"`
-	SunriseHour        int  `json:"sunrise_hour"`
-	SunsetHour         int  `json:"sunset_hour"`
-	TwinkleEnabled     bool `json:"twinkle_enabled"`
 }
 
 // StatsState stores streak counters and daily focus logs.
@@ -82,7 +66,6 @@ func DefaultState() *ApplicationState {
 			Name:              "My Oasis",
 			Tier:              0,
 			TotalFocusMinutes: 0,
-			Elements:          []OasisElement{},
 			CreatedAt:         time.Now(),
 		},
 		Sessions: []Session{},
@@ -94,9 +77,6 @@ func DefaultState() *ApplicationState {
 			LongBreakInterval:  4,
 			AutoStartBreaks:    false,
 			AutoStartFocus:     false,
-			SunriseHour:        7,
-			SunsetHour:         19,
-			TwinkleEnabled:     true,
 		},
 		Stats: StatsState{
 			CurrentStreak: 0,
@@ -123,14 +103,26 @@ func LoadState(path string) (*ApplicationState, error) {
 	}
 
 	// Ensure collections are initialized rather than nil
-	if state.Oasis.Elements == nil {
-		state.Oasis.Elements = []OasisElement{}
-	}
 	if state.Sessions == nil {
 		state.Sessions = []Session{}
 	}
 	if state.Stats.DailyRecords == nil {
 		state.Stats.DailyRecords = make(map[string]int)
+	}
+
+	// Clean up any active sessions from a previous run
+	hasActive := false
+	for i, sess := range state.Sessions {
+		if sess.Status == "active" {
+			state.Sessions[i].Status = "abandoned"
+			state.Sessions[i].CompletedAt = time.Now()
+			hasActive = true
+		}
+	}
+	if hasActive {
+		if err := SaveState(path, &state); err != nil {
+			return nil, err
+		}
 	}
 
 	return &state, nil
