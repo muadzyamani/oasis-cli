@@ -63,4 +63,29 @@ var (
 			BorderForeground(ColorRed).
 			Padding(1, 3).
 			Align(lipgloss.Center, lipgloss.Center)
+
+	// Settings Styles
+	SettingsTitle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(ColorLavender).
+			MarginBottom(1)
+
+	SettingsItemActive = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(ColorCyan)
+
+	SettingsItemInactive = lipgloss.NewStyle().
+			Foreground(ColorGray)
+
+	SettingsValueActive = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(ColorGold)
+
+	SettingsValueInactive = lipgloss.NewStyle().
+			Foreground(ColorGray)
+
+	SettingsHelp = lipgloss.NewStyle().
+			Foreground(ColorGray).
+			Italic(true).
+			MarginTop(1)
 )

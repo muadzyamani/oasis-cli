@@ -44,6 +44,7 @@ type SettingsState struct {
 	LongBreakInterval  int  `json:"long_break_interval"`
 	AutoStartBreaks    bool `json:"auto_start_breaks"`
 	AutoStartFocus     bool `json:"auto_start_focus"`
+	ShowStreak         bool `json:"show_streak"`
 }
 
 // StatsState stores streak counters and daily focus logs.
@@ -75,6 +76,7 @@ func DefaultState() *ApplicationState {
 			LongBreakInterval:  4,
 			AutoStartBreaks:    false,
 			AutoStartFocus:     false,
+			ShowStreak:         true,
 		},
 		Stats: StatsState{
 			CurrentStreak: 0,
@@ -95,8 +97,8 @@ func LoadState(path string) (*ApplicationState, error) {
 		return nil, err
 	}
 
-	var state ApplicationState
-	if err := json.Unmarshal(data, &state); err != nil {
+	state := DefaultState()
+	if err := json.Unmarshal(data, state); err != nil {
 		return nil, err
 	}
 
@@ -118,12 +120,12 @@ func LoadState(path string) (*ApplicationState, error) {
 		}
 	}
 	if hasActive {
-		if err := SaveState(path, &state); err != nil {
+		if err := SaveState(path, state); err != nil {
 			return nil, err
 		}
 	}
 
-	return &state, nil
+	return state, nil
 }
 
 // SaveState marshals and writes the state to path using an atomic temp-swap method.

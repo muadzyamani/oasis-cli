@@ -39,24 +39,32 @@ func (m Model) View() string {
 	}
 	navTabs := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 
-	streakUnit := "days"
-	if m.State.Stats.CurrentStreak == 1 {
-		streakUnit = "day"
+	var topBar string
+	if m.State.Settings.ShowStreak {
+		streakUnit := "days"
+		if m.State.Stats.CurrentStreak == 1 {
+			streakUnit = "day"
+		}
+		streakRight := fmt.Sprintf(
+			"Streak: %s",
+			styles.StreakStyle.Render(fmt.Sprintf("%d %s", m.State.Stats.CurrentStreak, streakUnit)),
+		)
+		spaceWidth := m.Width - lipgloss.Width(navTabs) - lipgloss.Width(streakRight) - 2
+		if spaceWidth < 0 {
+			spaceWidth = 0
+		}
+		topBar = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			navTabs,
+			strings.Repeat(" ", spaceWidth),
+			streakRight,
+		)
+	} else {
+		topBar = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			navTabs,
+		)
 	}
-	streakRight := fmt.Sprintf(
-		"Streak: %s",
-		styles.StreakStyle.Render(fmt.Sprintf("%d %s", m.State.Stats.CurrentStreak, streakUnit)),
-	)
-	spaceWidth := m.Width - lipgloss.Width(navTabs) - lipgloss.Width(streakRight) - 2
-	if spaceWidth < 0 {
-		spaceWidth = 0
-	}
-	topBar := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		navTabs,
-		strings.Repeat(" ", spaceWidth),
-		streakRight,
-	)
 	header := styles.HeaderContainer.Render(topBar)
 
 	// Dynamic height computation for layout components
@@ -86,7 +94,56 @@ func (m Model) View() string {
 	case TabStats:
 		pageContent = "📊  STATS & TRACKING PANEL\n\n(Streak calendars, historical focus charts, and metrics coming in Phase 5)"
 	case TabSettings:
-		pageContent = "⚙️  SETTINGS OPTIONS PANEL\n\n(Focus durations, sound toggles, and celestial cycles coming in Phase 5)"
+		// Render settings options
+		var settingsRows []string
+
+		// Options definitions
+		opts := []struct {
+			name  string
+			value string
+		}{
+			{"Focus Duration", fmt.Sprintf("[ %d min ]", m.State.Settings.FocusDuration)},
+			{"Break Duration", fmt.Sprintf("[ %d min ]", m.State.Settings.ShortBreakDuration)},
+			{"Sound Toggle", func() string {
+				if m.State.Settings.SoundEnabled {
+					return "[ Enabled ]"
+				}
+				return "[ Disabled ]"
+			}()},
+			{"View Streak", func() string {
+				if m.State.Settings.ShowStreak {
+					return "[ Show ]"
+				}
+				return "[ Hide ]"
+			}()},
+		}
+
+		for i, opt := range opts {
+			var row string
+			if m.SettingsCursor == i {
+				itemStr := styles.SettingsItemActive.Render(fmt.Sprintf("%-18s", opt.name))
+				valStr := styles.SettingsValueActive.Render(opt.value)
+				row = fmt.Sprintf("> %s  %s", itemStr, valStr)
+			} else {
+				itemStr := styles.SettingsItemInactive.Render(fmt.Sprintf("%-18s", opt.name))
+				valStr := styles.SettingsValueInactive.Render(opt.value)
+				row = fmt.Sprintf("  %s  %s", itemStr, valStr)
+			}
+			settingsRows = append(settingsRows, row)
+		}
+
+		settingsTitle := styles.SettingsTitle.Render("⚙️  SETTINGS")
+		settingsList := strings.Join(settingsRows, "\n\n")
+		settingsHelp := styles.SettingsHelp.Render("↑/↓: Navigate  •  ←/→: Adjust  •  Space/Enter: Toggle")
+
+		pageContent = lipgloss.JoinVertical(
+			lipgloss.Center,
+			settingsTitle,
+			"",
+			settingsList,
+			"",
+			settingsHelp,
+		)
 	}
 
 	viewportBorder := styles.ViewportContainer.

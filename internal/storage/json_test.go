@@ -32,12 +32,59 @@ func TestDefaultState(t *testing.T) {
 		t.Errorf("expected default focus duration 25, got %d", state.Settings.FocusDuration)
 	}
 
+	if !state.Settings.ShowStreak {
+		t.Error("expected default show streak to be true")
+	}
+
 	if state.Sessions == nil {
 		t.Error("expected default sessions to be non-nil")
 	}
 
 	if state.Stats.DailyRecords == nil {
 		t.Error("expected default daily records to be non-nil")
+	}
+}
+
+func TestLoadStatePreservesNewFields(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "oasis-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	path := filepath.Join(tempDir, "state.json")
+
+	// Write raw JSON without show_streak
+	rawJSON := `{
+		"oasis": {
+			"name": "Old Oasis",
+			"total_focus_minutes": 10
+		},
+		"settings": {
+			"focus_duration": 45
+		}
+	}`
+	err = os.WriteFile(path, []byte(rawJSON), 0644)
+	if err != nil {
+		t.Fatalf("failed to write raw JSON: %v", err)
+	}
+
+	loadedState, err := LoadState(path)
+	if err != nil {
+		t.Fatalf("failed to load state: %v", err)
+	}
+
+	if loadedState.Oasis.Name != "Old Oasis" {
+		t.Errorf("expected oasis name 'Old Oasis', got %q", loadedState.Oasis.Name)
+	}
+
+	if loadedState.Settings.FocusDuration != 45 {
+		t.Errorf("expected focus duration 45, got %d", loadedState.Settings.FocusDuration)
+	}
+
+	// Verify new field is initialized to default value (true)
+	if !loadedState.Settings.ShowStreak {
+		t.Error("expected ShowStreak to default to true for old config file lacking it")
 	}
 }
 

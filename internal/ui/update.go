@@ -138,6 +138,81 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			}
+		} else if m.ActiveTab == TabSettings {
+			switch msg.String() {
+			case "up", "k":
+				m.SettingsCursor--
+				if m.SettingsCursor < 0 {
+					m.SettingsCursor = 3
+				}
+				return m, nil
+			case "down", "j":
+				m.SettingsCursor++
+				if m.SettingsCursor > 3 {
+					m.SettingsCursor = 0
+				}
+				return m, nil
+			case "left":
+				switch m.SettingsCursor {
+				case 0: // Focus Duration
+					if m.State.Settings.FocusDuration > 1 {
+						m.State.Settings.FocusDuration--
+						_ = storage.SaveState(m.DbPath, m.State)
+						m.Timer.UpdateSettings(m.State.Settings)
+					}
+				case 1: // Break Duration
+					if m.State.Settings.ShortBreakDuration > 1 {
+						m.State.Settings.ShortBreakDuration--
+						_ = storage.SaveState(m.DbPath, m.State)
+						m.Timer.UpdateSettings(m.State.Settings)
+					}
+				case 2: // Sound
+					m.State.Settings.SoundEnabled = !m.State.Settings.SoundEnabled
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 3: // View Streak
+					m.State.Settings.ShowStreak = !m.State.Settings.ShowStreak
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				}
+				return m, nil
+			case "right":
+				switch m.SettingsCursor {
+				case 0: // Focus Duration
+					if m.State.Settings.FocusDuration < 120 {
+						m.State.Settings.FocusDuration++
+						_ = storage.SaveState(m.DbPath, m.State)
+						m.Timer.UpdateSettings(m.State.Settings)
+					}
+				case 1: // Break Duration
+					if m.State.Settings.ShortBreakDuration < 60 {
+						m.State.Settings.ShortBreakDuration++
+						_ = storage.SaveState(m.DbPath, m.State)
+						m.Timer.UpdateSettings(m.State.Settings)
+					}
+				case 2: // Sound
+					m.State.Settings.SoundEnabled = !m.State.Settings.SoundEnabled
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 3: // View Streak
+					m.State.Settings.ShowStreak = !m.State.Settings.ShowStreak
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				}
+				return m, nil
+			case " ", "enter":
+				switch m.SettingsCursor {
+				case 2: // Sound
+					m.State.Settings.SoundEnabled = !m.State.Settings.SoundEnabled
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 3: // View Streak
+					m.State.Settings.ShowStreak = !m.State.Settings.ShowStreak
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				}
+				return m, nil
+			}
 		}
 
 	case tickMsg:

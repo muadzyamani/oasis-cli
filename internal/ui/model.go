@@ -27,8 +27,9 @@ type Model struct {
 	Timer   *engine.Timer
 
 	// App State
-	Ready bool
-	Err   error
+	Ready          bool
+	Err            error
+	SettingsCursor int
 }
 
 // NewModel constructs a Model initialized from persistence state.
