@@ -87,6 +87,44 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Timer.Reset()
 				return m, nil
 
+			case "e": // e key: Toggle session type (working -> break -> long break)
+				if m.Timer.State == engine.StateRunning || m.Timer.State == engine.StatePaused {
+					abandonedSession := m.Timer.Stop(time.Now())
+					if abandonedSession != nil {
+						// Update session status in local log
+						found := false
+						for i, s := range m.State.Sessions {
+							if s.ID == abandonedSession.ID {
+								m.State.Sessions[i].Status = "abandoned"
+								m.State.Sessions[i].CompletedAt = abandonedSession.CompletedAt
+								found = true
+								break
+							}
+						}
+						if !found {
+							m.State.Sessions = append(m.State.Sessions, *abandonedSession)
+						}
+						_ = storage.SaveState(m.DbPath, m.State)
+					}
+				}
+
+				// Cycle through focus -> short-break -> long-break -> focus
+				var nextType string
+				switch m.Timer.SessionType {
+				case "focus":
+					nextType = "short-break"
+				case "short-break":
+					nextType = "long-break"
+				case "long-break":
+					nextType = "focus"
+				default:
+					nextType = "focus"
+				}
+
+				m.Timer.SessionType = nextType
+				m.Timer.Reset()
+				return m, nil
+
 			case "s": // s key: Skip session
 				if m.Timer.State == engine.StateIdle {
 					// Toggle session type using standard cycle logic
@@ -143,12 +181,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "up", "k":
 				m.SettingsCursor--
 				if m.SettingsCursor < 0 {
-					m.SettingsCursor = 3
+					m.SettingsCursor = 4
 				}
 				return m, nil
 			case "down", "j":
 				m.SettingsCursor++
-				if m.SettingsCursor > 3 {
+				if m.SettingsCursor > 4 {
 					m.SettingsCursor = 0
 				}
 				return m, nil
@@ -166,11 +204,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						_ = storage.SaveState(m.DbPath, m.State)
 						m.Timer.UpdateSettings(m.State.Settings)
 					}
-				case 2: // Sound
+				case 2: // Long Break Duration
+					if m.State.Settings.LongBreakDuration > 1 {
+						m.State.Settings.LongBreakDuration--
+						_ = storage.SaveState(m.DbPath, m.State)
+						m.Timer.UpdateSettings(m.State.Settings)
+					}
+				case 3: // Sound
 					m.State.Settings.SoundEnabled = !m.State.Settings.SoundEnabled
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
-				case 3: // View Streak
+				case 4: // View Streak
 					m.State.Settings.ShowStreak = !m.State.Settings.ShowStreak
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
@@ -190,11 +234,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						_ = storage.SaveState(m.DbPath, m.State)
 						m.Timer.UpdateSettings(m.State.Settings)
 					}
-				case 2: // Sound
+				case 2: // Long Break Duration
+					if m.State.Settings.LongBreakDuration < 120 {
+						m.State.Settings.LongBreakDuration++
+						_ = storage.SaveState(m.DbPath, m.State)
+						m.Timer.UpdateSettings(m.State.Settings)
+					}
+				case 3: // Sound
 					m.State.Settings.SoundEnabled = !m.State.Settings.SoundEnabled
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
-				case 3: // View Streak
+				case 4: // View Streak
 					m.State.Settings.ShowStreak = !m.State.Settings.ShowStreak
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
@@ -202,11 +252,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			case " ", "enter":
 				switch m.SettingsCursor {
-				case 2: // Sound
+				case 3: // Sound
 					m.State.Settings.SoundEnabled = !m.State.Settings.SoundEnabled
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
-				case 3: // View Streak
+				case 4: // View Streak
 					m.State.Settings.ShowStreak = !m.State.Settings.ShowStreak
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)

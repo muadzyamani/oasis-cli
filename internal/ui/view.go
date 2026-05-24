@@ -104,6 +104,7 @@ func (m Model) View() string {
 		}{
 			{"Focus Duration", fmt.Sprintf("[ %d min ]", m.State.Settings.FocusDuration)},
 			{"Break Duration", fmt.Sprintf("[ %d min ]", m.State.Settings.ShortBreakDuration)},
+			{"Long Break Duration", fmt.Sprintf("[ %d min ]", m.State.Settings.LongBreakDuration)},
 			{"Sound Toggle", func() string {
 				if m.State.Settings.SoundEnabled {
 					return "[ Enabled ]"
@@ -121,11 +122,11 @@ func (m Model) View() string {
 		for i, opt := range opts {
 			var row string
 			if m.SettingsCursor == i {
-				itemStr := styles.SettingsItemActive.Render(fmt.Sprintf("%-18s", opt.name))
+				itemStr := styles.SettingsItemActive.Render(fmt.Sprintf("%-22s", opt.name))
 				valStr := styles.SettingsValueActive.Render(opt.value)
 				row = fmt.Sprintf("> %s  %s", itemStr, valStr)
 			} else {
-				itemStr := styles.SettingsItemInactive.Render(fmt.Sprintf("%-18s", opt.name))
+				itemStr := styles.SettingsItemInactive.Render(fmt.Sprintf("%-22s", opt.name))
 				valStr := styles.SettingsValueInactive.Render(opt.value)
 				row = fmt.Sprintf("  %s  %s", itemStr, valStr)
 			}
