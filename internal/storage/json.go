@@ -20,7 +20,6 @@ type ApplicationState struct {
 // OasisState stores the current growth progress.
 type OasisState struct {
 	Name              string    `json:"name"`
-	Tier              int       `json:"tier"`
 	TotalFocusMinutes int       `json:"total_focus_minutes"`
 	CreatedAt         time.Time `json:"created_at"`
 }
@@ -64,7 +63,6 @@ func DefaultState() *ApplicationState {
 	return &ApplicationState{
 		Oasis: OasisState{
 			Name:              "My Oasis",
-			Tier:              0,
 			TotalFocusMinutes: 0,
 			CreatedAt:         time.Now(),
 		},

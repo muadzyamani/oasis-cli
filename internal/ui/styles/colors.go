@@ -16,18 +16,9 @@ var (
 // Lip Gloss Style Blocks
 var (
 	// Headers & Labels
-	TitleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(ColorGold).
-			Padding(0, 1)
-
 	StreakStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(ColorOrange)
-
-	TierStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(ColorCyan)
 
 	// Navigation Tabs
 	ActiveTabStyle = lipgloss.NewStyle().

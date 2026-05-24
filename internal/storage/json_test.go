@@ -74,7 +74,6 @@ func TestSaveAndLoad(t *testing.T) {
 
 	customState := DefaultState()
 	customState.Oasis.Name = "Test Oasis"
-	customState.Oasis.Tier = 3
 	customState.Oasis.TotalFocusMinutes = 120
 	customState.Sessions = append(customState.Sessions, Session{
 		ID:              "sess-1",
@@ -102,9 +101,7 @@ func TestSaveAndLoad(t *testing.T) {
 		t.Errorf("expected oasis name 'Test Oasis', got %q", loadedState.Oasis.Name)
 	}
 
-	if loadedState.Oasis.Tier != 3 {
-		t.Errorf("expected oasis tier 3, got %d", loadedState.Oasis.Tier)
-	}
+
 
 	if loadedState.Settings.FocusDuration != 50 {
 		t.Errorf("expected focus duration 50, got %d", loadedState.Settings.FocusDuration)

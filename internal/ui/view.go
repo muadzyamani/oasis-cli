@@ -27,26 +27,7 @@ func (m Model) View() string {
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, warningBox)
 	}
 
-	// 2. Render Header
-	headerLeft := styles.TitleStyle.Render("🌴 OASIS POMODORO")
-	headerRight := fmt.Sprintf(
-		"🔥 Streak: %s | 🏜️ Tier: %s",
-		styles.StreakStyle.Render(fmt.Sprintf("%d days", m.State.Stats.CurrentStreak)),
-		styles.TierStyle.Render(fmt.Sprintf("%d", m.State.Oasis.Tier)),
-	)
-	spaceWidth := m.Width - lipgloss.Width(headerLeft) - lipgloss.Width(headerRight) - 2
-	if spaceWidth < 0 {
-		spaceWidth = 0
-	}
-	headerBar := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		headerLeft,
-		strings.Repeat(" ", spaceWidth),
-		headerRight,
-	)
-	header := styles.HeaderContainer.Render(headerBar)
-
-	// 3. Render Navigation Bar
+	// 2. Render Navigation & Streak Header Row
 	tabs := []string{}
 	for _, t := range []Tab{TabOasis, TabStats, TabSettings} {
 		tabLabel := strings.ToUpper(string(t))
@@ -56,10 +37,30 @@ func (m Model) View() string {
 			tabs = append(tabs, styles.InactiveTabStyle.Render(fmt.Sprintf("○ %s", tabLabel)))
 		}
 	}
-	navBar := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
+	navTabs := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
+
+	streakUnit := "days"
+	if m.State.Stats.CurrentStreak == 1 {
+		streakUnit = "day"
+	}
+	streakRight := fmt.Sprintf(
+		"Streak: %s",
+		styles.StreakStyle.Render(fmt.Sprintf("%d %s", m.State.Stats.CurrentStreak, streakUnit)),
+	)
+	spaceWidth := m.Width - lipgloss.Width(navTabs) - lipgloss.Width(streakRight) - 2
+	if spaceWidth < 0 {
+		spaceWidth = 0
+	}
+	topBar := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		navTabs,
+		strings.Repeat(" ", spaceWidth),
+		streakRight,
+	)
+	header := styles.HeaderContainer.Render(topBar)
 
 	// Dynamic height computation for layout components
-	viewportHeight := m.Height - lipgloss.Height(header) - lipgloss.Height(navBar) - 5
+	viewportHeight := m.Height - lipgloss.Height(header) - 5
 	if viewportHeight < 3 {
 		viewportHeight = 3
 	}
@@ -101,7 +102,6 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
-		navBar,
 		viewportBorder,
 		footer,
 	)

@@ -125,7 +125,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 						if completedSession.Type == "focus" {
 							m.State.Oasis.TotalFocusMinutes += completedSession.DurationMinutes
-							m.State.Oasis.Tier = engine.GetTierForMinutes(m.State.Oasis.TotalFocusMinutes)
 						}
 						engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
 						if nextSession != nil {
@@ -155,7 +154,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					if completedSession.Type == "focus" {
 						m.State.Oasis.TotalFocusMinutes += completedSession.DurationMinutes
-						m.State.Oasis.Tier = engine.GetTierForMinutes(m.State.Oasis.TotalFocusMinutes)
 					}
 					engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
 				}

@@ -61,22 +61,4 @@ func UpdateStats(stats *storage.StatsState, focusMinutes int, now time.Time) {
 	}
 }
 
-// GetTierForMinutes maps total focus minutes to Oasis tier (0 to 5).
-func GetTierForMinutes(minutes int) int {
-	if minutes < 25 {
-		return 0
-	}
-	if minutes < 120 {
-		return 1
-	}
-	if minutes < 300 {
-		return 2
-	}
-	if minutes < 600 {
-		return 3
-	}
-	if minutes < 1200 {
-		return 4
-	}
-	return 5
-}
+

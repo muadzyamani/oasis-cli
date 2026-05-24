@@ -153,9 +153,6 @@ func TestUpdate_PomodoroKeys(t *testing.T) {
 	if updated.State.Oasis.TotalFocusMinutes != 25 {
 		t.Errorf("expected total focus minutes to be 25, got %d", updated.State.Oasis.TotalFocusMinutes)
 	}
-	if updated.State.Oasis.Tier != 1 {
-		t.Errorf("expected Tier to transition to 1, got %d", updated.State.Oasis.Tier)
-	}
 
 	// 7. Test 's' key skips break session during active run
 	// Note: Timer completed focus and automatically set next type to short-break (since autoStart is false, state is Idle)
