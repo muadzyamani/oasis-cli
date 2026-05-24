@@ -8,26 +8,32 @@ This document details the architectural design, user interface layout, visual re
 
 The application is structured around Charmbracelet's **Bubble Tea** (an Elm-architecture framework for Go) and **Lip Gloss** (a style definition library). To ensure maximum testability, maintainability, and clean separation of concerns, the project isolates pure mathematical and logical calculations into standard Go packages, keeping the terminal-rendering and key-binding loop as thin controllers.
 
-### Component Layering & Z-Index Compositing
+### Visual Layout & Rendering
 
-In standard web applications, overlapping dialogs (drawers, notifications) are handled via CSS absolute positioning and `z-index` layers. Since terminals are character grids, we must implement a custom **ASCII Layer Compositor**.
+The CLI TUI adopts a clean, centered, high-readability layout. Instead of dynamic environmental canvases, it centers a large digital Pomodoro clock on the screen:
 
 ```
 +-----------------------------------------------------------------+
-| Left Nav Rail |                     OasisScene                  |
-| [Stats]       |                                                 |
-| [Settings]    |           +-----------------------+             |
-|               |           |      Timer Widget     |             |
-|               |           |         24:59         |             |
-|               |           |     [Pause] [Stop]    |             |
-|               |           +-----------------------+             |
-|               |                                                 |
+|                       🌴 OASIS POMODORO                         |
+|  ● OASIS         ○ STATS         ○ SETTINGS                     |
+|                                                                 |
+|                         ▄███▄   ▄███▄   ▄   ▄███▄               |
+|                        ██▀ ▀██ ██▀ ▀██  █  ██▀ ▀██              |
+|                        ██ █ ██ ██ █ ██  ▄  ██ █ ██              |
+|                        ██▄ ▄██ ██▄ ▄██  █  ██▄ ▄██              |
+|                         ▀███▀   ▀███▀   ▄   ▀███▀               |
+|                                                                 |
+|                             focus session                       |
+|                                                                 |
+|        ██████████████████████████████░░░░░░░░░░░░░░░░░░░  60%   |
+|                                                                 |
+|       ↑ +1 min  •  space pause/resume  •  ← reset  •  s skip    |
 +-----------------------------------------------------------------+
 ```
 
-- **Background Canvas**: The `OasisScene` renders a full-viewport text canvas comprising the sky gradient, astronomical bodies, twinkling stars, sand dunes, a ripple pool, and planted vegetation.
-- **Overlay Panels**: The Timer Widget (centered float) and side drawers (Settings, Stats) are rendered as separate, bounded text rectangles.
-- **Compositor Engine**: A utility function merges these text blocks by painting the top-layer characters over the background canvas at specific row/column offsets.
+- **Large ASCII Digits**: The current remaining time is formatted into 5-line-high block text digits, dynamically aligned to the center.
+- **Gradient Progress Bar**: A color-interpolated bar showing current session completion, fading from blue to purple-pink, with a gray-shaded unfilled track and percentage label.
+- **Keyboard Guides**: Clear inline key guides for controlling the timer.
 
 ---
 
@@ -43,8 +49,6 @@ oasis-cli/
 ├── internal/
 │   ├── engine/
 │   │   ├── timer.go             # Pomodoro state machine (TDD)
-│   │   ├── growth.go            # Tier progressions, plant selectors (TDD)
-│   │   ├── ambient.go           # Solar arcs, color-interpolation (TDD)
 │   │   └── stats.go             # Streak calculations & daily metrics (TDD)
 │   ├── storage/
 │   │   └── json.go              # JSON local persistence engine (TDD)
@@ -53,15 +57,11 @@ oasis-cli/
 │       ├── update.go            # Bubble Tea Update event router
 │       ├── view.go              # Bubble Tea View composer & Layout builder
 │       ├── components/          # Styled Lip Gloss views
-│       │   ├── scene.go         # Sky, dunes, pool, & plants renderer
-│       │   ├── timer.go         # Floating timer widget
-│       │   ├── sidebar.go       # Navigation panel
+│       │   ├── timer.go         # Centered timer widget (Large digits, progress)
 │       │   ├── settings.go      # Settings options list
 │       │   └── stats.go         # Progress tracking & historic panels
-│       ├── styles/
-│       │   └── colors.go        # Design tokens & color functions
-│       └── utils/
-│           └── compositor.go    # Overlapping layout compositor utility
+│       └── styles/
+│           └── colors.go        # Design tokens & color functions
 ├── go.mod
 └── go.sum
 ```
@@ -136,35 +136,22 @@ type StatsState struct {
 
 ## 4. Visual Rendering System
 
-To replicate a premium visual experience in the terminal, we will build a dedicated, low-overhead ASCII rendering grid using true color (24-bit RGB) formatting via `lipgloss.Color`.
+To replicate a premium visual experience in the terminal, we will build a dedicated Pomodoro widget with the following features:
 
-### The Sky Canvas & Gradient
-- We define **14 color keyframes** across the day (similar to the web version: deep night, dawn lavender, solar noon yellow, sunset rose, twilight).
-- The `ambient` engine interpolates these colors minute-by-minute.
-- The Sky layer is generated row-by-row. We interpolate between `skyTopColor` and `skyBottomColor` to paint the background of each character space in that row.
+### Large ASCII/Block Digits
+- Remaining time is formatted (e.g., `25:00`) and rendered using a custom 5-line-high pixel block font.
+- Each digit (0-9) and the colon separator (:) are mapped to a 2D string slice.
+- Centered horizontally inside the viewport panel.
 
-### Sun, Moon, and Twinkling Stars
-- **Sun (`☼`) / Moon (`☾`)**: Solar elevation $E$ follows a sinusoidal curve:
-  $$E = \sin\left(\frac{t - t_{\text{sunrise}}}{t_{\text{sunset}} - t_{\text{sunrise}}} \times \pi\right)$$
-  Based on $E$, we calculate a coordinate grid location $(X, Y)$ and stamp a custom multi-character glowing shape.
-- **Stars**: Twinkling is simulated by generating $N$ star points seeded by coordinate hashes. A timer tick transitions the star character intensity through Lip Gloss color shades (e.g. bright white `█`, muted gray `░`, invisible) at different rates.
-
-### The Sand Dunes
-Dunes are rendered at the bottom section of the screen by plotting mathematical wave curves:
-$$Y = A \sin(B \cdot X + C) + D$$
-Each dune is colored in layered bands (representing ridges and shadow depth) using sand tones adjusted dynamically by the current time-of-day.
-
-### Flora & Vegetation
-Plants are stored as static multi-line ASCII shapes:
-```go
-var PalmSprite = []string{
-	"  \\│/  ",
-	" ─🌴─ ",
-	"  /│\\  ",
-	"   │   ",
-}
-```
-During active focus sessions, a "ghost preview" is rendered by styling the plant with a fading opacity palette (interpolating between text color and background color) as progress approaches completion.
+### Gradient Progress Bar
+- The progress bar is a smooth horizontal gradient that transitions between two custom colors:
+  - Start Color (Left): `#5E5CE6` (Indigo/Purple)
+  - End Color (Right): `#C738D8` (Purple/Pink)
+- For each character space in the filled bar, we interpolate the color:
+  - Progress ratio $P = \text{index} / \text{width}$.
+  - Character color = `InterpolateColor(startColor, endColor, P)`.
+- The unfilled portion is rendered with a dark grey shaded block pattern (`░` or `▒`) to give a depth effect.
+- The percentage (e.g., `60%`) is displayed as a clean text suffix.
 
 ---
 
@@ -177,15 +164,9 @@ To ensure the app is robust, all logic is isolated from terminal frameworks and 
 - Calculates current elapsed time and outputs state transitions.
 - **Tests (`timer_test.go`)**: Mock time increments and assert that transitions between focus and breaks happen correctly, and auto-start sequences trigger as configured.
 
-### B. Growth Engine (`internal/engine/growth.go`)
-- Maintains plant thresholds and unlocks.
-- Tracks round-robin cycles to choose between `palm`, `acacia`, `succulent`, and `willow`.
-- Calculates random placement coordinates within designated zones, guaranteeing no overlapping collisions.
-- **Tests (`growth_test.go`)**: Verify that completing focus sessions increments focus minutes, changes tiers at exact intervals (e.g. 25 min, 120 min), and returns valid coordinates.
-
-### C. Ambient Engine (`internal/engine/ambient.go`)
-- Calculates astronomical body orbits and color gradients.
-- **Tests (`ambient_test.go`)**: Input specific times (12:00 PM, 6:00 AM, 12:00 AM) and verify the correct color output, solar/lunar coordinates, and moon phase calculations.
+### B. Stats Engine (`internal/engine/stats.go`)
+- Tracks user streaks, longest streaks, and daily focus logs.
+- Automatically calculates streak retention rules based on calendar day changes.
 
 ---
 
@@ -212,12 +193,6 @@ To ensure the app is robust, all logic is isolated from terminal frameworks and 
              └────────────────────────┘
 ```
 
-1. **Unit Testing Go Logic**: Every module inside `internal/engine/` and `internal/storage/` must achieve $\ge 90\%$ test coverage before writing TUI shell wrappers.
-2. **Bubble Tea Update Testing**: We will test the core UI controller (`internal/ui/update.go`) using Go testing. We construct a `Model` and send it direct Bubble Tea messages (e.g. `tea.KeyMsg{Type: tea.KeySpace}`) and assert that states change as expected.
-3. **Compositor Test**: Unit test the string compositing engine to verify that when text overlays are merged at specific offsets, borders and internal contents are overwritten correctly without distorting the layout.
-
----
-
 ## 7. Phased Implementation Roadmap
 
 To maintain the highest quality and eliminate regressions, we divide the project into six discrete phases.
@@ -227,49 +202,42 @@ To maintain the highest quality and eliminate regressions, we divide the project
 - **Tasks**:
   1. Initialize Go module.
   2. Implement database models and persistence rules in `internal/storage/json.go`.
-  3. Write `json_test.go` to test database operations, atomic save safety, and directories creation.
-- **Success Criteria**: `go test ./internal/storage/...` passes with $100\%$ success.
+- **Success Criteria**: `go test ./internal/storage/...` passes.
 
 ### Phase 2: Core State Engines (TDD)
-- **Goal**: Implement all non-UI logical controllers.
+- **Goal**: Implement timer state machines and statistics.
 - **Tasks**:
-  1. Create `internal/engine/timer.go` and implement the Pomodoro timer state machine.
-  2. Create `internal/engine/growth.go` and implement plant cycling, positioning calculations, and tier limits.
-  3. Create `internal/engine/stats.go` and implement streak computation.
-  4. Write comprehensive tests for all three engines.
+  1. Create `internal/engine/timer.go` (Pomodoro timer state machine).
+  2. Create `internal/engine/stats.go` (Streak tracking).
 - **Success Criteria**: All unit tests pass with high coverage.
 
-### Phase 3: Ambient Engine & CLI Shell Integration
-- **Goal**: Integrate time-of-day math and initialize the Bubble Tea terminal process.
+### Phase 3: CLI Shell Integration
+- **Goal**: Initialize the Bubble Tea terminal process.
 - **Tasks**:
-  1. Implement `internal/engine/ambient.go` for celestial curves and sky color mapping.
-  2. Write `main.go` to bootstrap the Bubble Tea application loop.
-  3. Implement window size calculations and show a resizing warning if the terminal is below 80x24 characters.
-  4. Write basic key-binding handlers (Quit keys, tab navigation).
+  1. Write `main.go` to bootstrap the Bubble Tea application loop.
+  2. Implement window size calculations (require at least 80x24 characters).
+  3. Write basic key-binding handlers (Quit keys, tab navigation).
 - **Success Criteria**: Running the application opens a stable terminal window with basic input controls.
 
-### Phase 4: Layout Compositor & Canvas Rendering
-- **Goal**: Build the ASCII rendering engine and visual representation.
+### Phase 4: Centered Pomodoro Clock Widget
+- **Goal**: Build the primary focus clock rendering system.
 - **Tasks**:
-  1. Implement the character overlay compositor in `internal/ui/utils/compositor.go`.
-  2. Implement sky, star, dune, and pool renderers.
-  3. Create ASCII/Unicode representation of flora and vegetation.
-  4. Implement a developer command-line flag (`-dev`) that maps specific keys (`+`/`-`) to scrub through time, and a key (`f`) to trigger instant focus completions to inspect rendering.
-- **Success Criteria**: The terminal displays a beautiful animated desert landscape that reacts to time scrubbing.
+  1. Implement custom 5-line-high ASCII block fonts for digits 0-9 and :.
+  2. Implement horizontal gradient rendering for the progress bar (indigo-pink gradient).
+  3. Wire the Bubble Tea view to center the large digital clock and render the progress bar and percentage.
+  4. Implement keybindings: space (pause/resume), ← (reset), ↑ (+1 min), s (skip).
+- **Success Criteria**: The main Oasis page displays a beautiful, responsive centered digital Pomodoro timer with an animated progress bar.
 
-### Phase 5: Panel Integration (Timer, Settings, Drawers)
-- **Goal**: Connect interactive user controls and panels.
+### Phase 5: Panel Integration (Settings & Stats Drawers)
+- **Goal**: Connect stats and settings sub-pages.
 - **Tasks**:
-  1. Create the Timer card component (idle expanded card, compact bottom bar when active).
-  2. Connect the timer core clock to dispatch Bubble Tea ticks.
-  3. Create side drawers for Settings (adjustable durations, resets) and Stats (streaks, historic grid maps).
-  4. Integrate the compositor to slide/overlay drawers over the scene.
-- **Success Criteria**: Timers can be started, paused, completed, and settings configurations successfully persist to local JSON files.
+  1. Connect the real-time ticker clock to dispatch Bubble Tea ticks and decrement timer state.
+  2. Create full-page views or side drawers for Settings (adjustable durations, auto-start options) and Stats (streak calendars, historic grid maps).
+- **Success Criteria**: Full timer cycle operates automatically, updates statistics on completion, and settings adjustments successfully persist to the state JSON.
 
-### Phase 6: Animation, Bells, and Final Polish
-- **Goal**: Finalize animations, sound feedback, and packaging.
+### Phase 6: Bells and Final Polish
+- **Goal**: Finalize audio cues, edge cases, and standard linting.
 - **Tasks**:
-  1. Implement star twinkling, particle drift, and pool ripple animations using sub-second frame ticks.
-  2. Trigger terminal bell sounds (`\a`) on focus session completion.
-  3. Conduct full code linting, format standardizations, and binary packaging.
-- **Success Criteria**: Product is compile-ready, bug-free, and delivers a highly polished TUI experience.
+  1. Trigger terminal bell sounds (`\a`) on focus session completion.
+  2. Package binary and complete validation.
+- **Success Criteria**: TUI Pomodoro app is compile-ready, bug-free, and delivers a premium user experience.

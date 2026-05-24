@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muadzyamani/oasis-cli/internal/engine"
+	"github.com/muadzyamani/oasis-cli/internal/ui/components"
 	"github.com/muadzyamani/oasis-cli/internal/ui/styles"
 )
 
@@ -58,21 +58,6 @@ func (m Model) View() string {
 	}
 	navBar := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 
-	// 4. Render Active Viewport Page Content
-	var pageContent string
-	switch m.ActiveTab {
-	case TabOasis:
-		pageContent = fmt.Sprintf(
-			"🏜️  OASIS SUNBOX VIEWPORT\n\nTime of day: %s\nCelestial: %s\n\n(Animated dunes, vegetation growth, and sky graphics coming in Phase 4)",
-			timeOfDayDesc(m.Ambient),
-			celestialDesc(m.Ambient),
-		)
-	case TabStats:
-		pageContent = "📊  STATS & TRACKING PANEL\n\n(Streak calendars, historical focus charts, and metrics coming in Phase 5)"
-	case TabSettings:
-		pageContent = "⚙️  SETTINGS OPTIONS PANEL\n\n(Focus durations, sound toggles, and celestial cycles coming in Phase 5)"
-	}
-
 	// Dynamic height computation for layout components
 	viewportHeight := m.Height - lipgloss.Height(header) - lipgloss.Height(navBar) - 5
 	if viewportHeight < 3 {
@@ -82,6 +67,17 @@ func (m Model) View() string {
 	viewportWidth := m.Width - 6
 	if viewportWidth < 10 {
 		viewportWidth = 10
+	}
+
+	// 4. Render Active Viewport Page Content
+	var pageContent string
+	switch m.ActiveTab {
+	case TabOasis:
+		pageContent = components.RenderTimer(m.Timer, viewportWidth, viewportHeight)
+	case TabStats:
+		pageContent = "📊  STATS & TRACKING PANEL\n\n(Streak calendars, historical focus charts, and metrics coming in Phase 5)"
+	case TabSettings:
+		pageContent = "⚙️  SETTINGS OPTIONS PANEL\n\n(Focus durations, sound toggles, and celestial cycles coming in Phase 5)"
 	}
 
 	viewportBorder := styles.ViewportContainer.
@@ -101,18 +97,4 @@ func (m Model) View() string {
 		viewportBorder,
 		footer,
 	)
-}
-
-func timeOfDayDesc(amb engine.AmbientState) string {
-	if amb.IsDaytime {
-		return "Daytime"
-	}
-	return "Nighttime"
-}
-
-func celestialDesc(amb engine.AmbientState) string {
-	if amb.IsDaytime {
-		return fmt.Sprintf("Sun rising/setting at (X:%d, Y:%d)", amb.SunX, amb.SunY)
-	}
-	return fmt.Sprintf("Moon phase: %s (X:%d, Y:%d)", amb.MoonPhaseName, amb.MoonX, amb.MoonY)
 }

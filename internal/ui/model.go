@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"time"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muadzyamani/oasis-cli/internal/engine"
 	"github.com/muadzyamani/oasis-cli/internal/storage"
@@ -27,8 +25,6 @@ type Model struct {
 
 	// Logic Engines
 	Timer   *engine.Timer
-	Ambient engine.AmbientState
-	Stars   []engine.Star
 
 	// App State
 	Ready bool
@@ -50,14 +46,12 @@ func NewModel(state *storage.ApplicationState, dbPath string) Model {
 	}
 
 	timer := engine.NewTimer(state.Settings, lastCompletedType, completedFocusCount)
-	ambient := engine.GetAmbientState(time.Now(), state.Settings.SunriseHour, state.Settings.SunsetHour)
 
 	return Model{
 		ActiveTab: TabOasis,
 		State:     state,
 		DbPath:    dbPath,
 		Timer:     timer,
-		Ambient:   ambient,
 		Ready:     false,
 	}
 }
