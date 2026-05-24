@@ -4,6 +4,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/gen2brain/beeep"
 	"github.com/muadzyamani/oasis-cli/internal/engine"
 	"github.com/muadzyamani/oasis-cli/internal/storage"
 )
@@ -169,6 +170,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.State.Sessions = append(m.State.Sessions, *nextSession)
 						}
 						_ = storage.SaveState(m.DbPath, m.State)
+						sendSessionEndNotification(completedSession.Type, m.State.Settings.SoundEnabled)
 					}
 					if m.Timer.State == engine.StateRunning {
 						return m, tickCmd()
@@ -293,6 +295,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.State.Oasis.TotalFocusMinutes += completedSession.DurationMinutes
 					}
 					engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
+					sendSessionEndNotification(completedSession.Type, m.State.Settings.SoundEnabled)
 				}
 				if nextSession != nil {
 					m.State.Sessions = append(m.State.Sessions, *nextSession)
@@ -347,4 +350,35 @@ func tickCmd() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
+}
+
+func sendSessionEndNotification(sessionType string, soundEnabled bool) {
+	// --- NOTIFICATION CONFIGURATION ---
+	// You can customize the app name, title, messages, and icon path below.
+	
+	// AppName controls the main header of the notification popup (especially on Windows/Linux).
+	beeep.AppName = "Oasis"
+	
+	// Default values for notifications
+	var title string
+	var message string
+	
+	// Optional: path to an app icon (.png, .ico, etc.)
+	// var appIcon string = "path/to/icon.png"
+	var appIcon string = ""
+
+	if sessionType == "focus" {
+		title = "Focus Session Completed"
+		message = "Great job. Time to take a break."
+	} else {
+		title = "Break Completed"
+		message = "Let's continue."
+	}
+	// ----------------------------------
+
+	if soundEnabled {
+		_ = beeep.Alert(title, message, appIcon)
+	} else {
+		_ = beeep.Notify(title, message, appIcon)
+	}
 }
