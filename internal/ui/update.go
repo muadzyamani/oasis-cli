@@ -35,20 +35,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.State.Sessions = append(m.State.Sessions, *session)
 						_ = storage.SaveState(m.DbPath, m.State)
 					}
+					return m, tickCmd()
 				} else if m.Timer.State == engine.StateRunning {
 					m.Timer.Pause()
 				} else if m.Timer.State == engine.StatePaused {
 					m.Timer.Resume()
+					return m, tickCmd()
 				}
 				return m, nil
 
 			case "up": // Up Arrow: Add 1 minute
 				m.Timer.TimeRemaining += time.Minute
+				if m.Timer.State == engine.StateIdle {
+					m.Timer.Duration = m.Timer.TimeRemaining
+				} else {
+					m.Timer.Duration += time.Minute
+				}
 				return m, nil
 
 			case "down": // Down Arrow: Subtract 1 minute
 				if m.Timer.TimeRemaining > time.Minute {
 					m.Timer.TimeRemaining -= time.Minute
+					if m.Timer.State == engine.StateIdle {
+						m.Timer.Duration = m.Timer.TimeRemaining
+					} else {
+						m.Timer.Duration -= time.Minute
+					}
 				}
 				return m, nil
 
@@ -102,7 +114,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.Timer.TimeRemaining = duration
 				} else {
 					// Complete active session immediately
-					completed, completedSession, _ := m.Timer.Tick(m.Timer.TimeRemaining, time.Now())
+					completed, completedSession, nextSession := m.Timer.Tick(m.Timer.TimeRemaining, time.Now())
 					if completed && completedSession != nil {
 						for i, s := range m.State.Sessions {
 							if s.ID == completedSession.ID {
@@ -116,12 +128,47 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.State.Oasis.Tier = engine.GetTierForMinutes(m.State.Oasis.TotalFocusMinutes)
 						}
 						engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
+						if nextSession != nil {
+							m.State.Sessions = append(m.State.Sessions, *nextSession)
+						}
 						_ = storage.SaveState(m.DbPath, m.State)
+					}
+					if m.Timer.State == engine.StateRunning {
+						return m, tickCmd()
 					}
 				}
 				return m, nil
 			}
 		}
+
+	case tickMsg:
+		if m.Timer.State == engine.StateRunning {
+			completed, completedSession, nextSession := m.Timer.Tick(time.Second, time.Time(msg))
+			if completed {
+				if completedSession != nil {
+					for i, s := range m.State.Sessions {
+						if s.ID == completedSession.ID {
+							m.State.Sessions[i].Status = "complete"
+							m.State.Sessions[i].CompletedAt = completedSession.CompletedAt
+							break
+						}
+					}
+					if completedSession.Type == "focus" {
+						m.State.Oasis.TotalFocusMinutes += completedSession.DurationMinutes
+						m.State.Oasis.Tier = engine.GetTierForMinutes(m.State.Oasis.TotalFocusMinutes)
+					}
+					engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
+				}
+				if nextSession != nil {
+					m.State.Sessions = append(m.State.Sessions, *nextSession)
+				}
+				_ = storage.SaveState(m.DbPath, m.State)
+			}
+			if m.Timer.State == engine.StateRunning {
+				return m, tickCmd()
+			}
+		}
+		return m, nil
 
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
@@ -157,4 +204,12 @@ func prevTab(current Tab) Tab {
 	default:
 		return TabOasis
 	}
+}
+
+type tickMsg time.Time
+
+func tickCmd() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
 }

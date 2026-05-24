@@ -178,3 +178,38 @@ func TestUpdate_PomodoroKeys(t *testing.T) {
 		t.Errorf("expected timer Idle after skip completion, got %s", updated.Timer.State)
 	}
 }
+
+func TestUpdate_Ticking(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "oasis_test_tick_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dbPath := filepath.Join(tmpDir, "state.json")
+	state := storage.DefaultState()
+	m := NewModel(state, dbPath)
+
+	// Start the timer
+	resModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
+	updated := resModel.(Model)
+	if updated.Timer.State != engine.StateRunning {
+		t.Fatalf("expected timer to be running, got %s", updated.Timer.State)
+	}
+	if cmd == nil {
+		t.Fatal("expected tickCmd to be returned upon starting")
+	}
+
+	// Send a tickMsg
+	now := time.Now()
+	resModel, nextCmd := updated.Update(tickMsg(now))
+	ticked := resModel.(Model)
+
+	expectedRemaining := 25*time.Minute - time.Second
+	if ticked.Timer.TimeRemaining != expectedRemaining {
+		t.Errorf("expected TimeRemaining to be %v, got %v", expectedRemaining, ticked.Timer.TimeRemaining)
+	}
+	if nextCmd == nil {
+		t.Error("expected subsequent tickCmd to be returned from tickMsg handling")
+	}
+}

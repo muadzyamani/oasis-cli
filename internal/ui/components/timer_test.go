@@ -58,6 +58,14 @@ func TestRenderTimer(t *testing.T) {
 		t.Errorf("expected 0%% progress bar suffix, got: %q", cleanStr)
 	}
 
+	// Verify progress bar remains at 0% when time is modified in StateIdle
+	timer.TimeRemaining = 20 * time.Minute
+	renderedModifiedIdle := RenderTimer(timer, width, height)
+	cleanModifiedIdle := stripAnsi(renderedModifiedIdle)
+	if !strings.Contains(cleanModifiedIdle, "0%") {
+		t.Errorf("expected 0%% progress bar suffix when idle after time modified, got: %q", cleanModifiedIdle)
+	}
+
 	// Make the session active and verify it says "running"
 	timer.Start(time.Now())
 	renderedActive := RenderTimer(timer, width, height)

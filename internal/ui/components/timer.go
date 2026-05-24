@@ -177,15 +177,17 @@ func RenderTimer(t *engine.Timer, width, height int) string {
 		barWidth = 60
 	}
 
-	progress := 1.0
-	if t.Duration > 0 {
-		progress = 1.0 - float64(t.TimeRemaining)/float64(t.Duration)
-	}
-	if progress < 0 {
-		progress = 0
-	}
-	if progress > 1 {
-		progress = 1
+	progress := 0.0
+	if t.State != engine.StateIdle {
+		if t.Duration > 0 {
+			progress = 1.0 - float64(t.TimeRemaining)/float64(t.Duration)
+		}
+		if progress < 0 {
+			progress = 0
+		}
+		if progress > 1 {
+			progress = 1
+		}
 	}
 
 	filledCount := int(math.Round(progress * float64(barWidth)))
