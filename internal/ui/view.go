@@ -65,7 +65,7 @@ func (m Model) View() string {
 			navTabs,
 		)
 	}
-	header := styles.HeaderContainer.Render(topBar)
+	header := styles.HeaderContainer.Width(m.Width).Render(topBar)
 
 	// Dynamic height computation for layout components
 	viewportHeight := m.Height - lipgloss.Height(header) - 5
@@ -73,7 +73,7 @@ func (m Model) View() string {
 		viewportHeight = 3
 	}
 
-	viewportWidth := m.Width - 6
+	viewportWidth := m.Width - 2
 	if viewportWidth < 10 {
 		viewportWidth = 10
 	}
