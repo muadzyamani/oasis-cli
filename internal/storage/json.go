@@ -70,7 +70,7 @@ func DefaultState() *ApplicationState {
 		},
 		Sessions: []Session{},
 		Settings: SettingsState{
-			SoundEnabled:       false,
+			SoundEnabled:       true,
 			FocusDuration:      25,
 			ShortBreakDuration: 5,
 			LongBreakDuration:  15,
