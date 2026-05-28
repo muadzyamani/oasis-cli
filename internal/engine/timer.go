@@ -674,7 +674,13 @@ func RenderTimer(t *Timer, width, height int) string {
 
 	// 5. Render Legend Guides
 	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#4A4B59"))
-	legendBlock := legendStyle.Render("↑ +1 minute  •  space pause/resume  •  ← reset  •  s skip  •  e toggle")
+	var legendText string
+	if t.Settings.DevMode {
+		legendText = "↑ +1 minute  •  space pause/resume  •  ← reset  •  s skip  •  e toggle"
+	} else {
+		legendText = "↑ +1 minute  •  space pause/resume  •  ← reset  •  e toggle"
+	}
+	legendBlock := legendStyle.Render(legendText)
 
 	// Assemble page vertically and center within available space
 	content := lipgloss.JoinVertical(

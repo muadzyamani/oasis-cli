@@ -47,6 +47,7 @@ type SettingsState struct {
 	ShowStreak         bool   `json:"show_streak"`
 	UseArabicNumerals  bool   `json:"use_arabic_numerals"`
 	ProgressBarStyle   string `json:"progress_bar_style"`
+	DevMode            bool   `json:"dev_mode"`
 }
 
 // StatsState stores streak counters and daily focus logs.
@@ -81,6 +82,7 @@ func DefaultState() *ApplicationState {
 			ShowStreak:         true,
 			UseArabicNumerals:  false,
 			ProgressBarStyle:   "solid-capsule",
+			DevMode:            false,
 		},
 		Stats: StatsState{
 			CurrentStreak: 0,

@@ -127,6 +127,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 
 			case "s": // s key: Skip session
+				if !m.State.Settings.DevMode {
+					return m, nil
+				}
 				if m.Timer.State == engine.StateIdle {
 					// Toggle session type using standard cycle logic
 					if m.Timer.SessionType == "focus" {
@@ -183,12 +186,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "up", "k":
 				m.SettingsCursor--
 				if m.SettingsCursor < 0 {
-					m.SettingsCursor = 6
+					m.SettingsCursor = 7
 				}
 				return m, nil
 			case "down", "j":
 				m.SettingsCursor++
-				if m.SettingsCursor > 6 {
+				if m.SettingsCursor > 7 {
 					m.SettingsCursor = 0
 				}
 				return m, nil
@@ -239,6 +242,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					nextIdx := (currIdx - 1 + len(stylesList)) % len(stylesList)
 					m.State.Settings.ProgressBarStyle = stylesList[nextIdx]
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 7: // Dev Mode
+					m.State.Settings.DevMode = !m.State.Settings.DevMode
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
 				}
@@ -292,6 +299,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.State.Settings.ProgressBarStyle = stylesList[nextIdx]
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
+				case 7: // Dev Mode
+					m.State.Settings.DevMode = !m.State.Settings.DevMode
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
 				}
 				return m, nil
 			case " ", "enter":
@@ -323,6 +334,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					nextIdx := (currIdx + 1) % len(stylesList)
 					m.State.Settings.ProgressBarStyle = stylesList[nextIdx]
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 7: // Dev Mode
+					m.State.Settings.DevMode = !m.State.Settings.DevMode
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
 				}

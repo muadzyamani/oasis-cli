@@ -54,6 +54,7 @@ func TestUpdate_PomodoroKeys(t *testing.T) {
 
 	dbPath := filepath.Join(tmpDir, "state.json")
 	state := storage.DefaultState()
+	state.Settings.DevMode = true // Enable Dev Mode so that skipping is allowed
 	m := NewModel(state, dbPath)
 
 	// 1. Test space key starts the timer
@@ -464,5 +465,99 @@ func TestView_StatsPageOngoingSession(t *testing.T) {
 	viewStrAfter := m.View()
 	if !strings.Contains(viewStrAfter, "0h 25m focus") {
 		t.Errorf("expected view with ongoing session to contain '0h 25m focus', got:\n%s", viewStrAfter)
+	}
+}
+
+func TestUpdate_PomodoroKeys_DevModeDisabled(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "oasis_test_nodev_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dbPath := filepath.Join(tmpDir, "state.json")
+	state := storage.DefaultState()
+	state.Settings.DevMode = false // explicitly disabled (default)
+	m := NewModel(state, dbPath)
+
+	// 1. Initial type is "focus", state is StateIdle
+	if m.Timer.SessionType != "focus" {
+		t.Fatalf("expected Focus session, got %s", m.Timer.SessionType)
+	}
+
+	// 2. Press 's' - should do nothing because Dev Mode is disabled
+	resModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("s")})
+	updated := resModel.(Model)
+	if updated.Timer.SessionType != "focus" {
+		t.Errorf("expected session type to remain 'focus' when Dev Mode is disabled, got %s", updated.Timer.SessionType)
+	}
+
+	// 3. Start focus session
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
+	updated = resModel.(Model)
+	if updated.Timer.State != engine.StateRunning {
+		t.Fatalf("expected running timer, got %s", updated.Timer.State)
+	}
+
+	// 4. Press 's' during active session - should do nothing
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("s")})
+	updated = resModel.(Model)
+	if updated.Timer.State != engine.StateRunning {
+		t.Errorf("expected timer state to remain running, got %s", updated.Timer.State)
+	}
+	if updated.State.Oasis.TotalFocusMinutes != 0 {
+		t.Errorf("expected total focus minutes to remain 0, got %d", updated.State.Oasis.TotalFocusMinutes)
+	}
+}
+
+func TestUpdate_SettingsDevMode(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "oasis_test_settings_dev_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dbPath := filepath.Join(tmpDir, "state.json")
+	state := storage.DefaultState()
+	m := NewModel(state, dbPath)
+
+	m.ActiveTab = TabSettings
+	m.SettingsCursor = 7 // Dev Mode
+
+	if m.State.Settings.DevMode {
+		t.Fatal("expected DevMode to be false initially")
+	}
+
+	// Press left to toggle it
+	resModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("left")})
+	updated := resModel.(Model)
+	if !updated.State.Settings.DevMode {
+		t.Error("expected DevMode to toggle to true")
+	}
+	if !updated.Timer.Settings.DevMode {
+		t.Error("expected timer settings DevMode to toggle to true")
+	}
+
+	// Load from disk to verify persistence
+	loadedState, err := storage.LoadState(dbPath)
+	if err != nil {
+		t.Fatalf("failed to load state from disk: %v", err)
+	}
+	if !loadedState.Settings.DevMode {
+		t.Error("expected persisted DevMode to be true")
+	}
+
+	// Press right to toggle back to false
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("right")})
+	updated = resModel.(Model)
+	if updated.State.Settings.DevMode {
+		t.Error("expected DevMode to toggle back to false")
+	}
+
+	// Press space to toggle back to true
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
+	updated = resModel.(Model)
+	if !updated.State.Settings.DevMode {
+		t.Error("expected DevMode to toggle to true on space key")
 	}
 }

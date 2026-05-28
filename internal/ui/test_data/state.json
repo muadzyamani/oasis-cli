@@ -2,7 +2,7 @@
   "oasis": {
     "name": "My Oasis",
     "total_focus_minutes": 0,
-    "created_at": "2026-05-28T20:23:38.5155004+08:00"
+    "created_at": "2026-05-28T20:49:40.0786245+08:00"
   },
   "sessions": [],
   "settings": {
@@ -15,7 +15,8 @@
     "auto_start_focus": false,
     "show_streak": true,
     "use_arabic_numerals": false,
-    "progress_bar_style": "solid-capsule"
+    "progress_bar_style": "solid-capsule",
+    "dev_mode": false
   },
   "stats": {
     "current_streak": 1,

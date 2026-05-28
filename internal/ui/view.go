@@ -186,6 +186,12 @@ func (m Model) View() string {
 				return "[ Disabled ]"
 			}()},
 			{"Progress Bar Style", fmt.Sprintf("[ %s ]", formatProgressBarStyle(m.State.Settings.ProgressBarStyle))},
+			{"Dev Mode", func() string {
+				if m.State.Settings.DevMode {
+					return "[ Enabled ]"
+				}
+				return "[ Disabled ]"
+			}()},
 		}
 
 		for i, opt := range opts {
