@@ -49,7 +49,7 @@ var (
 
 	ViewportContainer = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
-				BorderForeground(ColorPurpleBorder).
+				BorderForeground(ColorPurpleMuted).
 				Padding(1, 2).
 				Align(lipgloss.Center, lipgloss.Center)
 
