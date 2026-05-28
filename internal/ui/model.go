@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muadzyamani/oasis-cli/internal/engine"
 	"github.com/muadzyamani/oasis-cli/internal/storage"
@@ -47,6 +49,13 @@ func NewModel(state *storage.ApplicationState, dbPath string) Model {
 	}
 
 	timer := engine.NewTimer(state.Settings, lastCompletedType, completedFocusCount)
+
+	// Recalculate streak to handle decay when app starts
+	oldStreak := state.Stats.CurrentStreak
+	state.Stats.CurrentStreak = engine.CalculateStreak(state.Stats.DailyRecords, time.Now())
+	if oldStreak != state.Stats.CurrentStreak {
+		_ = storage.SaveState(dbPath, state)
+	}
 
 	return Model{
 		ActiveTab: TabOasis,

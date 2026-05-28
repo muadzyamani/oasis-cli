@@ -88,4 +88,38 @@ var (
 			Foreground(ColorGray).
 			Italic(true).
 			MarginTop(1)
+
+	// Stats Styles
+	StatsTitle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(ColorLavender).
+			MarginBottom(1)
+
+	StatsCardToday = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorCyan).
+			Width(30).
+			Height(5).
+			Align(lipgloss.Center, lipgloss.Center)
+
+	StatsCardYesterday = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorGray).
+			Width(30).
+			Height(5).
+			Align(lipgloss.Center, lipgloss.Center)
+
+	StatsCardCurrentStreak = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorOrange).
+			Width(30).
+			Height(5).
+			Align(lipgloss.Center, lipgloss.Center)
+
+	StatsCardLongestStreak = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(ColorGold).
+			Width(30).
+			Height(5).
+			Align(lipgloss.Center, lipgloss.Center)
 )

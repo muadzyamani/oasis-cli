@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muadzyamani/oasis-cli/internal/engine"
@@ -92,7 +93,61 @@ func (m Model) View() string {
 		}
 		pageContent = engine.RenderTimer(m.Timer, innerWidth, innerHeight)
 	case TabStats:
-		pageContent = "📊  STATS & TRACKING PANEL\n\n(Streak calendars, historical focus charts, and metrics coming in Phase 5)"
+		todayStr := time.Now().Format("2006-01-02")
+		yesterdayStr := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+
+		todayMinutes := m.State.Stats.DailyRecords[todayStr]
+		yesterdayMinutes := m.State.Stats.DailyRecords[yesterdayStr]
+
+		// Add ongoing/paused focus session minutes if applicable
+		if m.Timer.SessionType == "focus" && (m.Timer.State == engine.StateRunning || m.Timer.State == engine.StatePaused) {
+			elapsed := m.Timer.Duration - m.Timer.TimeRemaining
+			todayMinutes += int(elapsed.Minutes())
+		}
+
+		// Card 1: Today
+		todayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorCyan).Render("TODAY")
+		todayValStr := formatHoursMinutes(todayMinutes)
+		todayValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorCyan).Render(todayValStr)
+		todaySub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("focus time")
+		todayContent := lipgloss.JoinVertical(lipgloss.Center, todayTitle, todayValue, todaySub)
+		cardToday := styles.StatsCardToday.Render(todayContent)
+
+		// Card 2: Yesterday
+		yesterdayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGray).Render("YESTERDAY")
+		yesterdayValStr := formatHoursMinutes(yesterdayMinutes)
+		yesterdayValue := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).Render(yesterdayValStr)
+		yesterdaySub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("focus time")
+		yesterdayContent := lipgloss.JoinVertical(lipgloss.Center, yesterdayTitle, yesterdayValue, yesterdaySub)
+		cardYesterday := styles.StatsCardYesterday.Render(yesterdayContent)
+
+		// Card 3: Current Streak
+		currStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorOrange).Render("CURRENT STREAK")
+		currStreakValStr := formatStreak(m.State.Stats.CurrentStreak)
+		currStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorOrange).Render(currStreakValStr)
+		currStreakSub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("consecutive days")
+		currStreakContent := lipgloss.JoinVertical(lipgloss.Center, currStreakTitle, currStreakValue, currStreakSub)
+		cardCurrent := styles.StatsCardCurrentStreak.Render(currStreakContent)
+
+		// Card 4: Longest Streak
+		longestStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGold).Render("LONGEST STREAK")
+		longestStreakValStr := formatStreak(m.State.Stats.LongestStreak)
+		longestStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGold).Render(longestStreakValStr)
+		longestStreakSub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("personal record")
+		longestStreakContent := lipgloss.JoinVertical(lipgloss.Center, longestStreakTitle, longestStreakValue, longestStreakSub)
+		cardLongest := styles.StatsCardLongestStreak.Render(longestStreakContent)
+
+		// Layout Columns
+		col1 := lipgloss.JoinVertical(lipgloss.Center, cardToday, "", cardYesterday)
+		col2 := lipgloss.JoinVertical(lipgloss.Center, cardCurrent, "", cardLongest)
+		cardsLayout := lipgloss.JoinHorizontal(lipgloss.Center, col1, "  ", col2)
+
+		pageContent = lipgloss.JoinVertical(
+			lipgloss.Center,
+			styles.StatsTitle.Render("📊  Statistics"),
+			"",
+			cardsLayout,
+		)
 	case TabSettings:
 		// Render settings options
 		var settingsRows []string
@@ -183,4 +238,17 @@ func (m Model) View() string {
 		viewportBorder,
 		footer,
 	)
+}
+
+func formatHoursMinutes(totalMinutes int) string {
+	hours := totalMinutes / 60
+	minutes := totalMinutes % 60
+	return fmt.Sprintf("%dh %dm", hours, minutes)
+}
+
+func formatStreak(streak int) string {
+	if streak == 1 {
+		return "1 day"
+	}
+	return fmt.Sprintf("%d days", streak)
 }

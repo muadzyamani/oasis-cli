@@ -1,0 +1,27 @@
+{
+  "oasis": {
+    "name": "My Oasis",
+    "total_focus_minutes": 0,
+    "created_at": "2026-05-28T20:09:40.9534553+08:00"
+  },
+  "sessions": [],
+  "settings": {
+    "sound_enabled": true,
+    "focus_duration": 25,
+    "short_break_duration": 5,
+    "long_break_duration": 15,
+    "long_break_interval": 4,
+    "auto_start_breaks": false,
+    "auto_start_focus": false,
+    "show_streak": true,
+    "use_arabic_numerals": false,
+    "progress_bar_style": "solid-capsule"
+  },
+  "stats": {
+    "current_streak": 1,
+    "longest_streak": 0,
+    "daily_records": {
+      "2026-05-28": 15
+    }
+  }
+}

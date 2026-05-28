@@ -164,8 +164,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 						if completedSession.Type == "focus" {
 							m.State.Oasis.TotalFocusMinutes += completedSession.DurationMinutes
+							engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
 						}
-						engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
 						if nextSession != nil {
 							m.State.Sessions = append(m.State.Sessions, *nextSession)
 						}
@@ -344,8 +344,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					if completedSession.Type == "focus" {
 						m.State.Oasis.TotalFocusMinutes += completedSession.DurationMinutes
+						engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
 					}
-					engine.UpdateStats(&m.State.Stats, completedSession.DurationMinutes, time.Now())
 					sendSessionEndNotification(completedSession.Type, m.State.Settings.SoundEnabled)
 				}
 				if nextSession != nil {

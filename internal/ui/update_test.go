@@ -3,6 +3,7 @@ package ui
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -365,3 +366,103 @@ func TestUpdate_SettingsArabicNumerals(t *testing.T) {
 	}
 }
 
+func TestNewModel_StreakDecay(t *testing.T) {
+	// Create state with a stale streak of 5
+	// But DailyRecords does not have today or yesterday sessions, so streak should decay to 0
+	state := storage.DefaultState()
+	state.Stats.CurrentStreak = 5
+	state.Stats.LongestStreak = 10
+	state.Stats.DailyRecords = map[string]int{
+		"2026-05-20": 25, // older session
+	}
+
+	tmpDir, err := os.MkdirTemp("", "oasis_test_decay_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+	dbPath := filepath.Join(tmpDir, "state.json")
+
+	// Instantiate NewModel
+	m := NewModel(state, dbPath)
+
+	// Streak should have decayed to 0 since no sessions were completed today or yesterday
+	if m.State.Stats.CurrentStreak != 0 {
+		t.Errorf("expected streak to decay to 0, got %d", m.State.Stats.CurrentStreak)
+	}
+	// Longest streak should remain unchanged
+	if m.State.Stats.LongestStreak != 10 {
+		t.Errorf("expected longest streak to remain 10, got %d", m.State.Stats.LongestStreak)
+	}
+}
+
+func TestView_StatsPage(t *testing.T) {
+	state := storage.DefaultState()
+	// Set today, yesterday, and day-before-yesterday focus minutes to support streak of 3
+	todayStr := time.Now().Format("2006-01-02")
+	yesterdayStr := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	dayBeforeYesterdayStr := time.Now().AddDate(0, 0, -2).Format("2006-01-02")
+	state.Stats.DailyRecords[todayStr] = 75       // 1h 15m
+	state.Stats.DailyRecords[yesterdayStr] = 130  // 2h 10m
+	state.Stats.DailyRecords[dayBeforeYesterdayStr] = 25
+	state.Stats.CurrentStreak = 3
+	state.Stats.LongestStreak = 8
+
+	m := NewModel(state, "test_data/state.json")
+	m.ActiveTab = TabStats
+	m.Width = 80
+	m.Height = 24
+	m.Ready = true
+
+	viewStr := m.View()
+
+	// Check that the grid titles and values are rendered correctly
+	expectedTexts := []string{
+		"TODAY",
+		"1h 15m",
+		"YESTERDAY",
+		"2h 10m",
+		"CURRENT STREAK",
+		"3 days",
+		"LONGEST STREAK",
+		"8 days",
+	}
+
+	for _, text := range expectedTexts {
+		if !strings.Contains(viewStr, text) {
+			t.Errorf("expected view to contain %q, but it did not", text)
+		}
+	}
+}
+
+func TestView_StatsPageOngoingSession(t *testing.T) {
+	state := storage.DefaultState()
+	// Start with 15 mins completed today
+	todayStr := time.Now().Format("2006-01-02")
+	state.Stats.DailyRecords[todayStr] = 15
+
+	m := NewModel(state, "test_data/state.json")
+	m.ActiveTab = TabStats
+	m.Width = 80
+	m.Height = 24
+	m.Ready = true
+
+	// Initially, view should show "0h 15m" (15m) for today
+	viewStrBefore := m.View()
+	if !strings.Contains(viewStrBefore, "0h 15m") {
+		t.Errorf("expected initial view to contain '0h 15m', got:\n%s", viewStrBefore)
+	}
+
+	// Start a focus session (duration is default 25 minutes)
+	m.Timer.SessionType = "focus"
+	m.Timer.Start(time.Now())
+
+	// Decrement remaining time by 10 minutes so that 10 minutes have elapsed
+	m.Timer.TimeRemaining = 15 * time.Minute
+
+	// Now check view. Today's focus time should include the 10 elapsed minutes: 15 + 10 = 25 minutes ("0h 25m")
+	viewStrAfter := m.View()
+	if !strings.Contains(viewStrAfter, "0h 25m") {
+		t.Errorf("expected view with ongoing session to contain '0h 25m', got:\n%s", viewStrAfter)
+	}
+}
