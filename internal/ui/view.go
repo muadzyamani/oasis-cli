@@ -30,7 +30,7 @@ func (m Model) View() string {
 	// 2. Render Navigation & Streak Header Row
 	tabs := []string{}
 	for _, t := range []Tab{TabOasis, TabStats, TabSettings} {
-		tabLabel := strings.ToUpper(string(t))
+		tabLabel := strings.ToLower(string(t))
 		if m.ActiveTab == t {
 			tabs = append(tabs, styles.ActiveTabStyle.Render(fmt.Sprintf("● %s", tabLabel)))
 		} else {
@@ -153,7 +153,7 @@ func (m Model) View() string {
 			settingsRows = append(settingsRows, row)
 		}
 
-		settingsTitle := styles.SettingsTitle.Render("⚙️  SETTINGS")
+		settingsTitle := styles.SettingsTitle.Render("⚙️  Settings")
 		settingsList := strings.Join(settingsRows, "\n\n")
 		settingsHelp := styles.SettingsHelp.Render("↑/↓: Navigate  •  ←/→: Adjust  •  Space/Enter: Toggle")
 
