@@ -481,3 +481,23 @@ func TestRenderTimerStyles(t *testing.T) {
 	}
 }
 
+func TestRenderTimerClockGradient(t *testing.T) {
+	settings := storage.SettingsState{
+		FocusDuration: 25,
+	}
+	timer := NewTimer(settings, "", 0)
+	timer.TimeRemaining = 25 * time.Minute // 25:00
+
+	rendered := RenderTimer(timer, 80, 24)
+
+	// Verify that the output has ANSI color escape codes containing the clock gradient start/end colors.
+	// Start color: #5D5FEF (RGB: 93, 95, 239) -> \x1b[38;2;93;95;239m
+	// End color: #BB86FC (RGB: 187, 134, 252) -> \x1b[38;2;187;134;252m
+	if !strings.Contains(rendered, "38;2;93;95;239") {
+		t.Error("expected rendered output to contain ANSI code for start color #5D5FEF (93, 95, 239)")
+	}
+	if !strings.Contains(rendered, "38;2;187;134;252") {
+		t.Error("expected rendered output to contain ANSI code for end color #BB86FC (187, 134, 252)")
+	}
+}
+

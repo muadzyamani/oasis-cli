@@ -104,32 +104,31 @@ func (m Model) View() string {
 			elapsed := m.Timer.Duration - m.Timer.TimeRemaining
 			todayMinutes += int(elapsed.Minutes())
 		}
-
 		// Card 1: Today
-		todayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorCyan).Render("TODAY")
+		todayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleToday).Render("TODAY")
 		todayValStr := formatHoursMinutes(todayMinutes)
-		todayValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorCyan).Render(todayValStr + " focus")
+		todayValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleToday).Render(todayValStr + " focus")
 		todayContent := lipgloss.JoinVertical(lipgloss.Center, todayTitle, todayValue)
 		cardToday := styles.StatsCardToday.Render(todayContent)
 
 		// Card 2: Yesterday
-		yesterdayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGray).Render("YESTERDAY")
+		yesterdayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleYesterday).Render("YESTERDAY")
 		yesterdayValStr := formatHoursMinutes(yesterdayMinutes)
-		yesterdayValue := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).Render(yesterdayValStr + " focus")
+		yesterdayValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleYesterday).Render(yesterdayValStr + " focus")
 		yesterdayContent := lipgloss.JoinVertical(lipgloss.Center, yesterdayTitle, yesterdayValue)
 		cardYesterday := styles.StatsCardYesterday.Render(yesterdayContent)
 
 		// Card 3: Current Streak
-		currStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorOrange).Render("CURRENT STREAK")
+		currStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleStreak).Render("CURRENT STREAK")
 		currStreakValStr := formatStreak(m.State.Stats.CurrentStreak)
-		currStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorOrange).Render(currStreakValStr + " streak")
+		currStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleStreak).Render(currStreakValStr + " streak")
 		currStreakContent := lipgloss.JoinVertical(lipgloss.Center, currStreakTitle, currStreakValue)
 		cardCurrent := styles.StatsCardCurrentStreak.Render(currStreakContent)
 
 		// Card 4: Longest Streak
-		longestStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGold).Render("LONGEST STREAK")
+		longestStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleLongest).Render("LONGEST STREAK")
 		longestStreakValStr := formatStreak(m.State.Stats.LongestStreak)
-		longestStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGold).Render(longestStreakValStr + " record")
+		longestStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorPurpleLongest).Render(longestStreakValStr + " record")
 		longestStreakContent := lipgloss.JoinVertical(lipgloss.Center, longestStreakTitle, longestStreakValue)
 		cardLongest := styles.StatsCardLongestStreak.Render(longestStreakContent)
 

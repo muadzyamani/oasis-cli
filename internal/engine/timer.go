@@ -461,12 +461,30 @@ func RenderTimer(t *Timer, width, height int) string {
 		clockLines[r] = strings.Join(rowParts, "  ") // spacing between digits
 	}
 
-	clockColor := lipgloss.Color("#5D5FEF") // Premium Indigo/Violet
-	clockStyle := lipgloss.NewStyle().Foreground(clockColor).Bold(true)
+	// Horizontal gradient colors for the clock block: from #5D5FEF (indigo) to #BB86FC (lavender)
+	clockStartColor := RGBColor{R: 93, G: 95, B: 239}   // #5D5FEF
+	clockEndColor := RGBColor{R: 187, G: 134, B: 252}   // #BB86FC
 
 	var renderedClockLines []string
 	for _, line := range clockLines {
-		renderedClockLines = append(renderedClockLines, clockStyle.Render(line))
+		runes := []rune(line)
+		var lineBuilder strings.Builder
+		numChars := len(runes)
+		for col, char := range runes {
+			if char == ' ' {
+				lineBuilder.WriteRune(' ')
+			} else {
+				ratio := 0.0
+				if numChars > 1 {
+					ratio = float64(col) / float64(numChars-1)
+				}
+				interpolated := InterpolateColor(clockStartColor, clockEndColor, ratio)
+				colorHex := formatHexColor(interpolated)
+				charStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorHex)).Bold(true)
+				lineBuilder.WriteString(charStyle.Render(string(char)))
+			}
+		}
+		renderedClockLines = append(renderedClockLines, lineBuilder.String())
 	}
 	clockBlock := strings.Join(renderedClockLines, "\n")
 
