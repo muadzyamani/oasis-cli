@@ -39,8 +39,7 @@ var (
 	HeaderContainer = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder(), false, false, true, false).
 			BorderForeground(lipgloss.Color("#2E3440")).
-			PaddingBottom(1).
-			MarginBottom(1)
+			PaddingBottom(1)
 
 	ViewportContainer = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
@@ -50,8 +49,7 @@ var (
 
 	FooterStyle = lipgloss.NewStyle().
 			Foreground(ColorGray).
-			Italic(true).
-			PaddingTop(1)
+			Italic(true)
 
 	// Warnings
 	WarningTitle = lipgloss.NewStyle().
@@ -98,28 +96,28 @@ var (
 	StatsCardToday = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorCyan).
-			Width(30).
-			Height(5).
+			Width(28).
+			Height(4).
 			Align(lipgloss.Center, lipgloss.Center)
 
 	StatsCardYesterday = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorGray).
-			Width(30).
-			Height(5).
+			Width(28).
+			Height(4).
 			Align(lipgloss.Center, lipgloss.Center)
 
 	StatsCardCurrentStreak = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorOrange).
-			Width(30).
-			Height(5).
+			Width(28).
+			Height(4).
 			Align(lipgloss.Center, lipgloss.Center)
 
 	StatsCardLongestStreak = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorGold).
-			Width(30).
-			Height(5).
+			Width(28).
+			Height(4).
 			Align(lipgloss.Center, lipgloss.Center)
 )

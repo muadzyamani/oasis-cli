@@ -108,33 +108,29 @@ func (m Model) View() string {
 		// Card 1: Today
 		todayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorCyan).Render("TODAY")
 		todayValStr := formatHoursMinutes(todayMinutes)
-		todayValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorCyan).Render(todayValStr)
-		todaySub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("focus time")
-		todayContent := lipgloss.JoinVertical(lipgloss.Center, todayTitle, todayValue, todaySub)
+		todayValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorCyan).Render(todayValStr + " focus")
+		todayContent := lipgloss.JoinVertical(lipgloss.Center, todayTitle, todayValue)
 		cardToday := styles.StatsCardToday.Render(todayContent)
 
 		// Card 2: Yesterday
 		yesterdayTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGray).Render("YESTERDAY")
 		yesterdayValStr := formatHoursMinutes(yesterdayMinutes)
-		yesterdayValue := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).Render(yesterdayValStr)
-		yesterdaySub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("focus time")
-		yesterdayContent := lipgloss.JoinVertical(lipgloss.Center, yesterdayTitle, yesterdayValue, yesterdaySub)
+		yesterdayValue := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).Render(yesterdayValStr + " focus")
+		yesterdayContent := lipgloss.JoinVertical(lipgloss.Center, yesterdayTitle, yesterdayValue)
 		cardYesterday := styles.StatsCardYesterday.Render(yesterdayContent)
 
 		// Card 3: Current Streak
 		currStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorOrange).Render("CURRENT STREAK")
 		currStreakValStr := formatStreak(m.State.Stats.CurrentStreak)
-		currStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorOrange).Render(currStreakValStr)
-		currStreakSub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("consecutive days")
-		currStreakContent := lipgloss.JoinVertical(lipgloss.Center, currStreakTitle, currStreakValue, currStreakSub)
+		currStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorOrange).Render(currStreakValStr + " streak")
+		currStreakContent := lipgloss.JoinVertical(lipgloss.Center, currStreakTitle, currStreakValue)
 		cardCurrent := styles.StatsCardCurrentStreak.Render(currStreakContent)
 
 		// Card 4: Longest Streak
 		longestStreakTitle := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGold).Render("LONGEST STREAK")
 		longestStreakValStr := formatStreak(m.State.Stats.LongestStreak)
-		longestStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGold).Render(longestStreakValStr)
-		longestStreakSub := lipgloss.NewStyle().Foreground(styles.ColorGray).Italic(true).Render("personal record")
-		longestStreakContent := lipgloss.JoinVertical(lipgloss.Center, longestStreakTitle, longestStreakValue, longestStreakSub)
+		longestStreakValue := lipgloss.NewStyle().Bold(true).Foreground(styles.ColorGold).Render(longestStreakValStr + " record")
+		longestStreakContent := lipgloss.JoinVertical(lipgloss.Center, longestStreakTitle, longestStreakValue)
 		cardLongest := styles.StatsCardLongestStreak.Render(longestStreakContent)
 
 		// Layout Columns
@@ -214,9 +210,7 @@ func (m Model) View() string {
 		pageContent = lipgloss.JoinVertical(
 			lipgloss.Center,
 			settingsTitle,
-			"",
 			settingsList,
-			"",
 			settingsHelp,
 		)
 	}

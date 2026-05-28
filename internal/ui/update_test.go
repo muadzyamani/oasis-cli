@@ -419,13 +419,13 @@ func TestView_StatsPage(t *testing.T) {
 	// Check that the grid titles and values are rendered correctly
 	expectedTexts := []string{
 		"TODAY",
-		"1h 15m",
+		"1h 15m focus",
 		"YESTERDAY",
-		"2h 10m",
+		"2h 10m focus",
 		"CURRENT STREAK",
-		"3 days",
+		"3 days streak",
 		"LONGEST STREAK",
-		"8 days",
+		"8 days record",
 	}
 
 	for _, text := range expectedTexts {
@@ -449,8 +449,8 @@ func TestView_StatsPageOngoingSession(t *testing.T) {
 
 	// Initially, view should show "0h 15m" (15m) for today
 	viewStrBefore := m.View()
-	if !strings.Contains(viewStrBefore, "0h 15m") {
-		t.Errorf("expected initial view to contain '0h 15m', got:\n%s", viewStrBefore)
+	if !strings.Contains(viewStrBefore, "0h 15m focus") {
+		t.Errorf("expected initial view to contain '0h 15m focus', got:\n%s", viewStrBefore)
 	}
 
 	// Start a focus session (duration is default 25 minutes)
@@ -462,7 +462,7 @@ func TestView_StatsPageOngoingSession(t *testing.T) {
 
 	// Now check view. Today's focus time should include the 10 elapsed minutes: 15 + 10 = 25 minutes ("0h 25m")
 	viewStrAfter := m.View()
-	if !strings.Contains(viewStrAfter, "0h 25m") {
-		t.Errorf("expected view with ongoing session to contain '0h 25m', got:\n%s", viewStrAfter)
+	if !strings.Contains(viewStrAfter, "0h 25m focus") {
+		t.Errorf("expected view with ongoing session to contain '0h 25m focus', got:\n%s", viewStrAfter)
 	}
 }
