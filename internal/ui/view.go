@@ -138,14 +138,13 @@ func (m Model) View() string {
 		cardLongest := styles.StatsCardLongestStreak.Render(longestStreakContent)
 
 		// Layout Columns
-		col1 := lipgloss.JoinVertical(lipgloss.Center, cardToday, "", cardYesterday)
-		col2 := lipgloss.JoinVertical(lipgloss.Center, cardCurrent, "", cardLongest)
+		col1 := lipgloss.JoinVertical(lipgloss.Center, cardToday, cardYesterday)
+		col2 := lipgloss.JoinVertical(lipgloss.Center, cardCurrent, cardLongest)
 		cardsLayout := lipgloss.JoinHorizontal(lipgloss.Center, col1, "  ", col2)
 
 		pageContent = lipgloss.JoinVertical(
 			lipgloss.Center,
 			styles.StatsTitle.Render("📊  Statistics"),
-			"",
 			cardsLayout,
 		)
 	case TabSettings:
@@ -209,7 +208,7 @@ func (m Model) View() string {
 		}
 
 		settingsTitle := styles.SettingsTitle.Render("⚙️  Settings")
-		settingsList := strings.Join(settingsRows, "\n\n")
+		settingsList := strings.Join(settingsRows, "\n")
 		settingsHelp := styles.SettingsHelp.Render("↑/↓: Navigate  •  ←/→: Adjust  •  Space/Enter: Toggle")
 
 		pageContent = lipgloss.JoinVertical(
