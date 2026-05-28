@@ -98,6 +98,19 @@ func (m Model) View() string {
 		var settingsRows []string
 
 		// Options definitions
+		formatProgressBarStyle := func(style string) string {
+			switch style {
+			case "solid-capsule":
+				return "Solid Capsule"
+			case "beaded-capsule":
+				return "Beaded Capsule"
+			case "framed-rounded":
+				return "Framed Rounded"
+			default:
+				return "Solid Capsule"
+			}
+		}
+
 		opts := []struct {
 			name  string
 			value string
@@ -123,6 +136,7 @@ func (m Model) View() string {
 				}
 				return "[ Disabled ]"
 			}()},
+			{"Progress Bar Style", fmt.Sprintf("[ %s ]", formatProgressBarStyle(m.State.Settings.ProgressBarStyle))},
 		}
 
 		for i, opt := range opts {

@@ -183,12 +183,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "up", "k":
 				m.SettingsCursor--
 				if m.SettingsCursor < 0 {
-					m.SettingsCursor = 5
+					m.SettingsCursor = 6
 				}
 				return m, nil
 			case "down", "j":
 				m.SettingsCursor++
-				if m.SettingsCursor > 5 {
+				if m.SettingsCursor > 6 {
 					m.SettingsCursor = 0
 				}
 				return m, nil
@@ -222,6 +222,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.Timer.UpdateSettings(m.State.Settings)
 				case 5: // Arabic Numerals
 					m.State.Settings.UseArabicNumerals = !m.State.Settings.UseArabicNumerals
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 6: // Progress Bar Style
+					stylesList := []string{
+						"solid-capsule",
+						"beaded-capsule",
+						"framed-rounded",
+					}
+					currIdx := 0
+					for idx, s := range stylesList {
+						if s == m.State.Settings.ProgressBarStyle {
+							currIdx = idx
+							break
+						}
+					}
+					nextIdx := (currIdx - 1 + len(stylesList)) % len(stylesList)
+					m.State.Settings.ProgressBarStyle = stylesList[nextIdx]
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
 				}
@@ -258,6 +275,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.State.Settings.UseArabicNumerals = !m.State.Settings.UseArabicNumerals
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
+				case 6: // Progress Bar Style
+					stylesList := []string{
+						"solid-capsule",
+						"beaded-capsule",
+						"framed-rounded",
+					}
+					currIdx := 0
+					for idx, s := range stylesList {
+						if s == m.State.Settings.ProgressBarStyle {
+							currIdx = idx
+							break
+						}
+					}
+					nextIdx := (currIdx + 1) % len(stylesList)
+					m.State.Settings.ProgressBarStyle = stylesList[nextIdx]
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
 				}
 				return m, nil
 			case " ", "enter":
@@ -272,6 +306,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.Timer.UpdateSettings(m.State.Settings)
 				case 5: // Arabic Numerals
 					m.State.Settings.UseArabicNumerals = !m.State.Settings.UseArabicNumerals
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 6: // Progress Bar Style
+					stylesList := []string{
+						"solid-capsule",
+						"beaded-capsule",
+						"framed-rounded",
+					}
+					currIdx := 0
+					for idx, s := range stylesList {
+						if s == m.State.Settings.ProgressBarStyle {
+							currIdx = idx
+							break
+						}
+					}
+					nextIdx := (currIdx + 1) % len(stylesList)
+					m.State.Settings.ProgressBarStyle = stylesList[nextIdx]
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
 				}

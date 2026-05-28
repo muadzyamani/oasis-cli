@@ -37,15 +37,16 @@ type Session struct {
 
 // SettingsState stores customizable timer configurations and visuals.
 type SettingsState struct {
-	SoundEnabled       bool `json:"sound_enabled"`
-	FocusDuration      int  `json:"focus_duration"`
-	ShortBreakDuration int  `json:"short_break_duration"`
-	LongBreakDuration  int  `json:"long_break_duration"`
-	LongBreakInterval  int  `json:"long_break_interval"`
-	AutoStartBreaks    bool `json:"auto_start_breaks"`
-	AutoStartFocus     bool `json:"auto_start_focus"`
-	ShowStreak         bool `json:"show_streak"`
-	UseArabicNumerals  bool `json:"use_arabic_numerals"`
+	SoundEnabled       bool   `json:"sound_enabled"`
+	FocusDuration      int    `json:"focus_duration"`
+	ShortBreakDuration int    `json:"short_break_duration"`
+	LongBreakDuration  int    `json:"long_break_duration"`
+	LongBreakInterval  int    `json:"long_break_interval"`
+	AutoStartBreaks    bool   `json:"auto_start_breaks"`
+	AutoStartFocus     bool   `json:"auto_start_focus"`
+	ShowStreak         bool   `json:"show_streak"`
+	UseArabicNumerals  bool   `json:"use_arabic_numerals"`
+	ProgressBarStyle   string `json:"progress_bar_style"`
 }
 
 // StatsState stores streak counters and daily focus logs.
@@ -79,6 +80,7 @@ func DefaultState() *ApplicationState {
 			AutoStartFocus:     false,
 			ShowStreak:         true,
 			UseArabicNumerals:  false,
+			ProgressBarStyle:   "solid-capsule",
 		},
 		Stats: StatsState{
 			CurrentStreak: 0,

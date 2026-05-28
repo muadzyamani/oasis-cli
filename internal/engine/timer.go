@@ -529,27 +529,130 @@ func RenderTimer(t *Timer, width, height int) string {
 	startColor := RGBColor{R: 94, G: 92, B: 230}   // #5E5CE6
 	endColor := RGBColor{R: 199, G: 56, B: 216}   // #C738D8
 
-	var barBuilder strings.Builder
-	for i := 0; i < filledCount; i++ {
-		ratio := float64(i) / float64(barWidth)
-		interpolated := InterpolateColor(startColor, endColor, ratio)
-		colorHex := formatHexColor(interpolated)
-		charStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorHex))
-		barBuilder.WriteString(charStyle.Render("█"))
+	// Progress bar style configuration
+	style := t.Settings.ProgressBarStyle
+	if style == "" {
+		style = "solid-capsule"
 	}
 
+	leftCap := "◖"
+	rightCap := "◗"
+	progressChar := "█"
+	remainingChar := "░"
+	useCapsules := true
+
+	switch style {
+	case "beaded-capsule":
+		leftCap = "("
+		rightCap = ")"
+		progressChar = "●"
+		remainingChar = "○"
+	case "framed-rounded":
+		useCapsules = false
+	default: // "solid-capsule" and fallback
+		leftCap = "◖"
+		rightCap = "◗"
+		progressChar = "█"
+		remainingChar = "░"
+	}
+
+	var progressBlock string
 	unfilledStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#2E303E"))
-	for i := filledCount; i < barWidth; i++ {
-		barBuilder.WriteString(unfilledStyle.Render("░"))
-	}
-
 	percentageText := fmt.Sprintf("  %3d%%", int(progress*100))
 	percentageStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#7F8C8D"))
-	progressBlock := lipgloss.JoinHorizontal(
-		lipgloss.Center,
-		barBuilder.String(),
-		percentageStyle.Render(percentageText),
-	)
+
+	if useCapsules {
+		var barBuilder strings.Builder
+		for i := 0; i < barWidth; i++ {
+			var char string
+			if i == 0 {
+				char = leftCap
+			} else if i == barWidth-1 {
+				char = rightCap
+			} else {
+				if i < filledCount {
+					char = progressChar
+				} else {
+					char = remainingChar
+				}
+			}
+
+			// Render with gradient if filled, otherwise with unfilledStyle
+			isFilled := false
+			if i == 0 {
+				isFilled = filledCount > 0
+			} else if i == barWidth-1 {
+				isFilled = filledCount == barWidth
+			} else {
+				isFilled = i < filledCount
+			}
+
+			if isFilled {
+				ratio := float64(i) / float64(barWidth-1) // smooth gradient scale from 0 to 1
+				interpolated := InterpolateColor(startColor, endColor, ratio)
+				colorHex := formatHexColor(interpolated)
+				charStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorHex))
+				barBuilder.WriteString(charStyle.Render(char))
+			} else {
+				if char == " " {
+					barBuilder.WriteString(" ")
+				} else {
+					barBuilder.WriteString(unfilledStyle.Render(char))
+				}
+			}
+		}
+
+		progressBlock = lipgloss.JoinHorizontal(
+			lipgloss.Center,
+			barBuilder.String(),
+			percentageStyle.Render(percentageText),
+		)
+	} else {
+		// Framed rounded style: 3 lines high
+		innerBarWidth := barWidth - 2
+		if innerBarWidth < 10 {
+			innerBarWidth = 10
+		}
+
+		// Recalculate filled count for inner bar width
+		innerFilledCount := int(math.Round(progress * float64(innerBarWidth)))
+		if innerFilledCount < 0 {
+			innerFilledCount = 0
+		}
+		if innerFilledCount > innerBarWidth {
+			innerFilledCount = innerBarWidth
+		}
+
+		var innerBarBuilder strings.Builder
+		for i := 0; i < innerBarWidth; i++ {
+			if i < innerFilledCount {
+				ratio := float64(i) / float64(innerBarWidth-1)
+				interpolated := InterpolateColor(startColor, endColor, ratio)
+				colorHex := formatHexColor(interpolated)
+				charStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(colorHex))
+				innerBarBuilder.WriteString(charStyle.Render("█"))
+			} else {
+				innerBarBuilder.WriteString(" ")
+			}
+		}
+
+		topLine := unfilledStyle.Render("╭" + strings.Repeat("─", innerBarWidth) + "╮")
+		middleLine := unfilledStyle.Render("│") + innerBarBuilder.String() + unfilledStyle.Render("│")
+		bottomLine := unfilledStyle.Render("╰" + strings.Repeat("─", innerBarWidth) + "╯")
+
+		middleLineWithPercent := lipgloss.JoinHorizontal(
+			lipgloss.Center,
+			middleLine,
+			percentageStyle.Render(percentageText),
+		)
+
+		progressBlock = lipgloss.JoinVertical(
+			lipgloss.Left,
+			topLine,
+			middleLineWithPercent,
+			bottomLine,
+		)
+	}
 
 	// 5. Render Legend Guides
 	legendStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#4A4B59"))

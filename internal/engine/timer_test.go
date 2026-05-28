@@ -401,3 +401,83 @@ func TestRenderTimer(t *testing.T) {
 	}
 }
 
+func TestRenderTimerStyles(t *testing.T) {
+	tests := []struct {
+		style    string
+		expected []string
+		absent   []string
+	}{
+		{
+			style:    "solid-capsule",
+			expected: []string{"◖", "◗", "█"},
+			absent:   []string{"●", "○", "╭", "╮"},
+		},
+		{
+			style:    "beaded-capsule",
+			expected: []string{"(", ")", "●", "○"},
+			absent:   []string{"◖", "◗", "█", "╭", "╮"},
+		},
+		{
+			style:    "framed-rounded",
+			expected: []string{"╭", "╮", "╰", "╯", "│"},
+			absent:   []string{"◖", "◗", "("},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.style, func(t *testing.T) {
+			settings := storage.SettingsState{
+				FocusDuration:    25,
+				ProgressBarStyle: tc.style,
+			}
+			timer := NewTimer(settings, "", 0)
+			timer.TimeRemaining = 10 * time.Minute
+			timer.Start(time.Now())
+
+			rendered := RenderTimer(timer, 80, 24)
+			clean := stripAnsi(rendered)
+
+			// Find the progress bar line (the one containing the percentage suffix, e.g. "%")
+			var barLineIdx = -1
+			lines := strings.Split(clean, "\n")
+			for i, line := range lines {
+				if strings.Contains(line, "%") {
+					barLineIdx = i
+					break
+				}
+			}
+			if barLineIdx == -1 {
+				t.Fatalf("expected style %q output to contain a line with percentage, but none was found. Output:\n%s", tc.style, clean)
+			}
+
+			// For multi-line styles, look at the block of lines around the percentage line
+			var barBlock string
+			if tc.style == "framed-rounded" {
+				start := barLineIdx - 1
+				end := barLineIdx + 1
+				if start < 0 {
+					start = 0
+				}
+				if end >= len(lines) {
+					end = len(lines) - 1
+				}
+				barBlock = strings.Join(lines[start:end+1], "\n")
+			} else {
+				barBlock = lines[barLineIdx]
+			}
+
+			for _, exp := range tc.expected {
+				if !strings.Contains(barBlock, exp) {
+					t.Errorf("expected progress bar block in style %q to contain %q, but it was not found. Block:\n%s", tc.style, exp, barBlock)
+				}
+			}
+
+			for _, abs := range tc.absent {
+				if strings.Contains(barBlock, abs) {
+					t.Errorf("expected progress bar block in style %q to NOT contain %q, but it was found. Block:\n%s", tc.style, abs, barBlock)
+				}
+			}
+		})
+	}
+}
+
