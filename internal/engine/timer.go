@@ -352,39 +352,6 @@ func formatHexColor(c RGBColor) string {
 	return fmt.Sprintf("#%02X%02X%02X", c.R, c.G, c.B)
 }
 
-// Designs for Number 4 to choose from
-var BlockDigits_Number4_Design1 = []string{
-	" ▄█  █▄ ",
-	"██▀  ▀██",
-	"▀██████▀",
-	"     ██ ",
-	"     ██▀",
-}
-
-var BlockDigits_Number4_Design2 = []string{
-	" ▄█  █▄ ",
-	"██▀  ▀██",
-	"████████",
-	"     ██ ",
-	"     ██ ",
-}
-
-var BlockDigits_Number4_Design3 = []string{
-	"██   ██ ",
-	"██   ██ ",
-	"▀██████▀",
-	"     ██ ",
-	"     ██ ",
-}
-
-var BlockDigits_Number4_Design4 = []string{
-	" ▄█  █▄ ",
-	"██▀  ▀██",
-	"▀██████▀",
-	"     ██ ",
-	"     ██ ",
-}
-
 // 5-line high arcade-style block digits (8 columns wide each, colon is 3 columns wide)
 var BlockDigits = map[rune][]string{
 	'0': {
