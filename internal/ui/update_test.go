@@ -561,3 +561,76 @@ func TestUpdate_SettingsDevMode(t *testing.T) {
 		t.Error("expected DevMode to toggle to true on space key")
 	}
 }
+
+func TestUpdate_SettingsHideControls(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "oasis_test_settings_hide_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dbPath := filepath.Join(tmpDir, "state.json")
+	state := storage.DefaultState()
+	m := NewModel(state, dbPath)
+
+	m.ActiveTab = TabSettings
+
+	// Verify Hide Main Controls (index 8)
+	m.SettingsCursor = 8
+	if m.State.Settings.HideMainControls {
+		t.Fatal("expected HideMainControls to be false initially")
+	}
+
+	resModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("left")})
+	updated := resModel.(Model)
+	if !updated.State.Settings.HideMainControls {
+		t.Error("expected HideMainControls to toggle to true")
+	}
+
+	// Verify Hide Timer Controls (index 9)
+	updated.SettingsCursor = 9
+	if updated.State.Settings.HideTimerControls {
+		t.Fatal("expected HideTimerControls to be false initially")
+	}
+
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("right")})
+	updated = resModel.(Model)
+	if !updated.State.Settings.HideTimerControls {
+		t.Error("expected HideTimerControls to toggle to true")
+	}
+
+	// Load from disk to verify persistence
+	loadedState, err := storage.LoadState(dbPath)
+	if err != nil {
+		t.Fatalf("failed to load state from disk: %v", err)
+	}
+	if !loadedState.Settings.HideMainControls || !loadedState.Settings.HideTimerControls {
+		t.Error("expected persisted settings to be true")
+	}
+}
+
+func TestView_HideControls(t *testing.T) {
+	state := storage.DefaultState()
+	state.Settings.HideMainControls = true
+	state.Settings.HideTimerControls = true
+
+	m := NewModel(state, "test_data/state.json")
+	m.ActiveTab = TabOasis
+	m.Width = 80
+	m.Height = 24
+	m.Ready = true
+
+	viewStr := m.View()
+
+	// Verify main navigation & quitting footer controls are hidden
+	footerContent := "Tab / Shift+Tab: Navigate"
+	if strings.Contains(viewStr, footerContent) {
+		t.Errorf("expected view to NOT contain %q, but it did", footerContent)
+	}
+
+	// Verify timer legend guides are hidden
+	legendContent := "space pause/resume"
+	if strings.Contains(viewStr, legendContent) {
+		t.Errorf("expected view to NOT contain %q, but it did", legendContent)
+	}
+}

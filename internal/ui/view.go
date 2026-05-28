@@ -192,6 +192,18 @@ func (m Model) View() string {
 				}
 				return "[ Disabled ]"
 			}()},
+			{"Hide Main Controls", func() string {
+				if m.State.Settings.HideMainControls {
+					return "[ Enabled ]"
+				}
+				return "[ Disabled ]"
+			}()},
+			{"Hide Timer Controls", func() string {
+				if m.State.Settings.HideTimerControls {
+					return "[ Enabled ]"
+				}
+				return "[ Disabled ]"
+			}()},
 		}
 
 		for i, opt := range opts {
@@ -226,8 +238,11 @@ func (m Model) View() string {
 		Render(pageContent)
 
 	// 5. Render Footer
-	footerText := styles.FooterStyle.Render("Tab / Shift+Tab: Navigate  •  Q / Ctrl+C: Quit")
-	footer := lipgloss.PlaceHorizontal(m.Width, lipgloss.Center, footerText)
+	var footer string
+	if !m.State.Settings.HideMainControls {
+		footerText := styles.FooterStyle.Render("Tab / Shift+Tab: Navigate  •  Q / Ctrl+C: Quit")
+		footer = lipgloss.PlaceHorizontal(m.Width, lipgloss.Center, footerText)
+	}
 
 	// Join entire viewport screen vertically
 	return lipgloss.JoinVertical(

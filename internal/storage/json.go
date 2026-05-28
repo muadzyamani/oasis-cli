@@ -48,6 +48,8 @@ type SettingsState struct {
 	UseArabicNumerals  bool   `json:"use_arabic_numerals"`
 	ProgressBarStyle   string `json:"progress_bar_style"`
 	DevMode            bool   `json:"dev_mode"`
+	HideMainControls   bool   `json:"hide_main_controls"`
+	HideTimerControls  bool   `json:"hide_timer_controls"`
 }
 
 // StatsState stores streak counters and daily focus logs.
@@ -83,6 +85,8 @@ func DefaultState() *ApplicationState {
 			UseArabicNumerals:  false,
 			ProgressBarStyle:   "solid-capsule",
 			DevMode:            false,
+			HideMainControls:   false,
+			HideTimerControls:  false,
 		},
 		Stats: StatsState{
 			CurrentStreak: 0,

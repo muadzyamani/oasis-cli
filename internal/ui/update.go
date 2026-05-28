@@ -186,12 +186,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "up", "k":
 				m.SettingsCursor--
 				if m.SettingsCursor < 0 {
-					m.SettingsCursor = 7
+					m.SettingsCursor = 9
 				}
 				return m, nil
 			case "down", "j":
 				m.SettingsCursor++
-				if m.SettingsCursor > 7 {
+				if m.SettingsCursor > 9 {
 					m.SettingsCursor = 0
 				}
 				return m, nil
@@ -246,6 +246,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.Timer.UpdateSettings(m.State.Settings)
 				case 7: // Dev Mode
 					m.State.Settings.DevMode = !m.State.Settings.DevMode
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 8: // Hide Main Controls
+					m.State.Settings.HideMainControls = !m.State.Settings.HideMainControls
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 9: // Hide Timer Controls
+					m.State.Settings.HideTimerControls = !m.State.Settings.HideTimerControls
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
 				}
@@ -303,6 +311,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.State.Settings.DevMode = !m.State.Settings.DevMode
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
+				case 8: // Hide Main Controls
+					m.State.Settings.HideMainControls = !m.State.Settings.HideMainControls
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 9: // Hide Timer Controls
+					m.State.Settings.HideTimerControls = !m.State.Settings.HideTimerControls
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
 				}
 				return m, nil
 			case " ", "enter":
@@ -338,6 +354,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.Timer.UpdateSettings(m.State.Settings)
 				case 7: // Dev Mode
 					m.State.Settings.DevMode = !m.State.Settings.DevMode
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 8: // Hide Main Controls
+					m.State.Settings.HideMainControls = !m.State.Settings.HideMainControls
+					_ = storage.SaveState(m.DbPath, m.State)
+					m.Timer.UpdateSettings(m.State.Settings)
+				case 9: // Hide Timer Controls
+					m.State.Settings.HideTimerControls = !m.State.Settings.HideTimerControls
 					_ = storage.SaveState(m.DbPath, m.State)
 					m.Timer.UpdateSettings(m.State.Settings)
 				}
