@@ -159,12 +159,16 @@ func (t *Timer) Stop(now time.Time) *storage.Session {
 		return nil
 	}
 
+	elapsed := t.Duration - t.TimeRemaining
+	accruedMinutes := int(elapsed.Minutes())
+
 	abandonedSession := &storage.Session{
-		ID:          t.CurrentSessionID,
-		Type:        t.SessionType,
-		StartedAt:   now.Add(-t.Duration + t.TimeRemaining), // approximate start
-		CompletedAt: now,
-		Status:      "abandoned",
+		ID:              t.CurrentSessionID,
+		Type:            t.SessionType,
+		StartedAt:       now.Add(-elapsed),
+		CompletedAt:     now,
+		DurationMinutes: accruedMinutes,
+		Status:          "abandoned",
 	}
 
 	t.State = StateIdle

@@ -634,3 +634,55 @@ func TestView_HideControls(t *testing.T) {
 		t.Errorf("expected view to NOT contain %q, but it did", legendContent)
 	}
 }
+
+func TestUpdate_AbandonAccruedMinutes(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "oasis_test_abandon_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dbPath := filepath.Join(tmpDir, "state.json")
+	state := storage.DefaultState()
+	m := NewModel(state, dbPath)
+
+	// 1. Start a focus session
+	resModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")})
+	updated := resModel.(Model)
+	if updated.Timer.State != engine.StateRunning {
+		t.Fatalf("expected timer to be running, got %s", updated.Timer.State)
+	}
+
+	// 2. Simulate 5 minutes of work by adjusting TimeRemaining
+	updated.Timer.TimeRemaining = updated.Timer.Duration - 5*time.Minute
+
+	// 3. Reset the timer (left arrow)
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("left")})
+	resetModel := resModel.(Model)
+
+	if resetModel.Timer.State != engine.StateIdle {
+		t.Errorf("expected timer to be idle, got %s", resetModel.Timer.State)
+	}
+
+	// 4. Verify that 5 minutes were added to TotalFocusMinutes and daily stats
+	if resetModel.State.Oasis.TotalFocusMinutes != 5 {
+		t.Errorf("expected 5 focus minutes, got %d", resetModel.State.Oasis.TotalFocusMinutes)
+	}
+
+	todayStr := time.Now().Format("2006-01-02")
+	todayMinutes := resetModel.State.Stats.DailyRecords[todayStr]
+	if todayMinutes != 5 {
+		t.Errorf("expected 5 daily focus minutes, got %d", todayMinutes)
+	}
+
+	// Also verify the abandoned session's DurationMinutes is 5 in the list
+	if len(resetModel.State.Sessions) != 1 {
+		t.Fatalf("expected 1 session, got %d", len(resetModel.State.Sessions))
+	}
+	if resetModel.State.Sessions[0].DurationMinutes != 5 {
+		t.Errorf("expected session duration minutes to be 5, got %d", resetModel.State.Sessions[0].DurationMinutes)
+	}
+	if resetModel.State.Sessions[0].Status != "abandoned" {
+		t.Errorf("expected status 'abandoned', got %s", resetModel.State.Sessions[0].Status)
+	}
+}

@@ -2,7 +2,7 @@
   "oasis": {
     "name": "My Oasis",
     "total_focus_minutes": 0,
-    "created_at": "2026-05-28T20:53:38.6163955+08:00"
+    "created_at": "2026-05-29T17:47:29.7569574+08:00"
   },
   "sessions": [],
   "settings": {
@@ -24,7 +24,7 @@
     "current_streak": 1,
     "longest_streak": 0,
     "daily_records": {
-      "2026-05-28": 15
+      "2026-05-29": 15
     }
   }
 }

@@ -501,3 +501,23 @@ func TestRenderTimerClockGradient(t *testing.T) {
 	}
 }
 
+func TestTimerStopAccruesMinutes(t *testing.T) {
+	settings := storage.SettingsState{
+		FocusDuration: 25,
+	}
+	timer := NewTimer(settings, "", 0)
+	now := time.Now()
+
+	timer.Start(now)
+	// Simulate 12 minutes elapsed
+	timer.TimeRemaining = timer.Duration - 12*time.Minute
+
+	abandoned := timer.Stop(now.Add(12 * time.Minute))
+	if abandoned == nil {
+		t.Fatal("expected abandoned session to be returned")
+	}
+	if abandoned.DurationMinutes != 12 {
+		t.Errorf("expected DurationMinutes to be 12, got %d", abandoned.DurationMinutes)
+	}
+}
+

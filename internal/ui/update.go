@@ -15,6 +15,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
+			m = m.abandonActiveSession()
 			return m, tea.Quit
 
 		case "tab", "l":
@@ -66,48 +67,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 
 			case "left": // Left Arrow: Reset timer
-				if m.Timer.State == engine.StateRunning || m.Timer.State == engine.StatePaused {
-					abandonedSession := m.Timer.Stop(time.Now())
-					if abandonedSession != nil {
-						// Update session status in local log
-						found := false
-						for i, s := range m.State.Sessions {
-							if s.ID == abandonedSession.ID {
-								m.State.Sessions[i].Status = "abandoned"
-								m.State.Sessions[i].CompletedAt = abandonedSession.CompletedAt
-								found = true
-								break
-							}
-						}
-						if !found {
-							m.State.Sessions = append(m.State.Sessions, *abandonedSession)
-						}
-						_ = storage.SaveState(m.DbPath, m.State)
-					}
-				}
+				m = m.abandonActiveSession()
 				m.Timer.Reset()
 				return m, nil
 
 			case "e": // e key: Toggle session type (working -> break -> long break)
-				if m.Timer.State == engine.StateRunning || m.Timer.State == engine.StatePaused {
-					abandonedSession := m.Timer.Stop(time.Now())
-					if abandonedSession != nil {
-						// Update session status in local log
-						found := false
-						for i, s := range m.State.Sessions {
-							if s.ID == abandonedSession.ID {
-								m.State.Sessions[i].Status = "abandoned"
-								m.State.Sessions[i].CompletedAt = abandonedSession.CompletedAt
-								found = true
-								break
-							}
-						}
-						if !found {
-							m.State.Sessions = append(m.State.Sessions, *abandonedSession)
-						}
-						_ = storage.SaveState(m.DbPath, m.State)
-					}
-				}
+				m = m.abandonActiveSession()
 
 				// Cycle through focus -> short-break -> long-break -> focus
 				var nextType string
@@ -494,3 +459,31 @@ func sendSessionEndNotification(sessionType string, soundEnabled bool) {
 // 	// defer f.Close()
 // 	// ... play logic ...
 // }
+
+// abandonActiveSession stops the active session, records it as abandoned, and adds accrued minutes if it was a focus session.
+func (m Model) abandonActiveSession() Model {
+	if m.Timer.State == engine.StateRunning || m.Timer.State == engine.StatePaused {
+		abandonedSession := m.Timer.Stop(time.Now())
+		if abandonedSession != nil {
+			found := false
+			for i, s := range m.State.Sessions {
+				if s.ID == abandonedSession.ID {
+					m.State.Sessions[i].Status = "abandoned"
+					m.State.Sessions[i].CompletedAt = abandonedSession.CompletedAt
+					m.State.Sessions[i].DurationMinutes = abandonedSession.DurationMinutes
+					found = true
+					break
+				}
+			}
+			if !found {
+				m.State.Sessions = append(m.State.Sessions, *abandonedSession)
+			}
+			if abandonedSession.Type == "focus" && abandonedSession.DurationMinutes > 0 {
+				m.State.Oasis.TotalFocusMinutes += abandonedSession.DurationMinutes
+				engine.UpdateStats(&m.State.Stats, abandonedSession.DurationMinutes, time.Now())
+			}
+			_ = storage.SaveState(m.DbPath, m.State)
+		}
+	}
+	return m
+}
