@@ -240,7 +240,7 @@ func (m Model) View() string {
 	// 5. Render Footer
 	var footer string
 	if !m.State.Settings.HideMainControls {
-		footerText := styles.FooterStyle.Render("Tab / Shift+Tab: Navigate  •  Q / Ctrl+C: Quit")
+		footerText := styles.FooterStyle.Render("Tab / `: Navigate  •  Q / Ctrl+C: Quit")
 		footer = lipgloss.PlaceHorizontal(m.Width, lipgloss.Center, footerText)
 	}
 

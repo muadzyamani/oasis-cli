@@ -20,16 +20,32 @@ func TestUpdate_Navigation(t *testing.T) {
 		t.Fatalf("expected TabOasis, got %s", m.ActiveTab)
 	}
 
+	// 1. Test Tab key (forwards)
 	resModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("tab")})
 	updated := resModel.(Model)
 	if updated.ActiveTab != TabStats {
 		t.Errorf("expected TabStats, got %s", updated.ActiveTab)
 	}
 
+	// 2. Test Shift+Tab (backwards)
 	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	updated = resModel.(Model)
 	if updated.ActiveTab != TabOasis {
 		t.Errorf("expected TabOasis, got %s", updated.ActiveTab)
+	}
+
+	// 3. Test ` key (backwards)
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("`")})
+	updated = resModel.(Model)
+	if updated.ActiveTab != TabSettings {
+		t.Errorf("expected TabSettings, got %s", updated.ActiveTab)
+	}
+
+	// 4. Test ` key again (backwards) to stats
+	resModel, _ = updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("`")})
+	updated = resModel.(Model)
+	if updated.ActiveTab != TabStats {
+		t.Errorf("expected TabStats, got %s", updated.ActiveTab)
 	}
 }
 
@@ -623,7 +639,7 @@ func TestView_HideControls(t *testing.T) {
 	viewStr := m.View()
 
 	// Verify main navigation & quitting footer controls are hidden
-	footerContent := "Tab / Shift+Tab: Navigate"
+	footerContent := "Tab / `: Navigate"
 	if strings.Contains(viewStr, footerContent) {
 		t.Errorf("expected view to NOT contain %q, but it did", footerContent)
 	}

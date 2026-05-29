@@ -22,7 +22,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ActiveTab = nextTab(m.ActiveTab)
 			return m, nil
 
-		case "shift+tab", "h":
+		case "shift+tab", "h", "`":
 			m.ActiveTab = prevTab(m.ActiveTab)
 			return m, nil
 		}
